@@ -11,6 +11,12 @@ namespace Shaders
 
 LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	switch (msg)
+	{
+	case WM_CLOSE:
+		PostQuitMessage(31);
+		break;
+	}
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
@@ -121,12 +127,18 @@ int WINAPI WinMain(
 	struct Vertex
 	{
 		dx::XMFLOAT3 pos;
+		dx::XMFLOAT2 texCoord;
 	} vertices[4];
 
-	vertices[0].pos = { -1.0f, 1.0f, 0.0f };
-	vertices[1].pos = { 1.0f, 1.0f, 0.0f };
-	vertices[2].pos = { -1.0f, -1.0f, 0.0f };
-	vertices[3].pos = { 1.0f, -1.0f, 0.0f };
+	vertices[0].pos = { -1.0f, 1.0f, 0.5f };
+	vertices[1].pos = { 1.0f, 1.0f, 0.5f };
+	vertices[2].pos = { -1.0f, -1.0f, 0.5f };
+	vertices[3].pos = { 1.0f, -1.0f, 0.5f };
+
+	vertices[0].texCoord = { 0.0f, 0.0f };
+	vertices[1].texCoord = { 1.0f, 0.0f };
+	vertices[2].texCoord = { 0.0f, 1.0f };
+	vertices[3].texCoord = { 1.0f, 1.0f };
 
 	D3D11_BUFFER_DESC vbd = {};
 	vbd.ByteWidth = sizeof(vertices);
@@ -197,10 +209,11 @@ int WINAPI WinMain(
 	wrl::ComPtr<ID3D11InputLayout> pInputLayout;
 	D3D11_INPUT_ELEMENT_DESC ied[] =
 	{
-		{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}
+		{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"TexCoord", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 
-	if (FAILED(pDevice->CreateInputLayout(ied, 1, Shaders::VertexShaderBytecode, sizeof(Shaders::VertexShaderBytecode), &pInputLayout)))
+	if (FAILED(pDevice->CreateInputLayout(ied, 2, Shaders::VertexShaderBytecode, sizeof(Shaders::VertexShaderBytecode), &pInputLayout)))
 	{
 		MessageBox(nullptr, "Failed to create input layout.", "D3D11 Error", MB_OK | MB_ICONWARNING);
 	}
@@ -208,6 +221,67 @@ int WINAPI WinMain(
 	pContext->IASetInputLayout(pInputLayout.Get());
 
 	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	wrl::ComPtr<ID3D11Texture2D> pTex;
+
+	D3D11_TEXTURE2D_DESC texDesc;
+	texDesc.Width = 160;
+	texDesc.Height = 144;
+	texDesc.MipLevels = 1;
+	texDesc.ArraySize = 1;
+	texDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	texDesc.SampleDesc.Count = 1;
+	texDesc.SampleDesc.Quality = 0;
+	texDesc.Usage = D3D11_USAGE_DYNAMIC;
+	texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	texDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	texDesc.MiscFlags = 0;
+
+	if (FAILED(pDevice->CreateTexture2D(&texDesc, nullptr, &pTex)))
+	{
+		MessageBox(nullptr, "Failed to create texture.", "D3D11 Error", MB_OK | MB_ICONWARNING);
+	}
+
+	wrl::ComPtr<ID3D11ShaderResourceView> pTexView;
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = texDesc.Format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = 1;
+
+	if (FAILED(pDevice->CreateShaderResourceView(pTex.Get(),
+		&srvDesc, &pTexView)))
+	{
+		MessageBox(nullptr, "Failed to create texture view.", "D3D11 Error", MB_OK | MB_ICONWARNING);
+	}
+
+	wrl::ComPtr<ID3D11SamplerState> pSamplerState;
+
+	D3D11_SAMPLER_DESC sampDesc = {};
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDesc.MinLOD = 0;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	if (FAILED(pDevice->CreateSamplerState(&sampDesc, &pSamplerState)))
+	{
+		MessageBox(nullptr, "Failed to create texture sampler.", "D3D11 Error", MB_OK | MB_ICONWARNING);
+	}
+
+	struct Color
+	{
+		unsigned char b;
+		unsigned char g;
+		unsigned char r;
+		unsigned char a;
+	};
+
+	Color* pBuffer = (Color*)malloc(sizeof(Color) * 144 * 160);
+
+	pContext->PSSetShaderResources(0u, 1u, pTexView.GetAddressOf());
+	pContext->PSSetSamplers(0u, 1u, pSamplerState.GetAddressOf());
 
 
 	float background[4] = { 0.4f,0.4f,0.4f,1.0f };
@@ -225,6 +299,19 @@ int WINAPI WinMain(
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+		memset(pBuffer, 0, sizeof(Color) * 144 * 160);
+		D3D11_MAPPED_SUBRESOURCE msr;
+		if (FAILED(pContext->Map(pTex.Get(), 0u,
+			D3D11_MAP_WRITE_DISCARD, 0u, &msr)))
+		{
+			MessageBox(nullptr, "Failed to map buffer.", "D3D11 Error", MB_OK | MB_ICONWARNING);
+		}
+		Color* pmb = (Color*)msr.pData;
+		for (int y = 0; y < 144; y++)
+		{
+			memcpy(&pmb[y * 144], &pBuffer[y * 144], sizeof(Color) * 160);
+		}
+		pContext->Unmap(pTex.Get(), 0u);
 		pContext->ClearRenderTargetView(pTargetView.Get(), background);
 		pContext->DrawIndexed(6, 0, 0);
 		pSwapChain->Present(1, 0);
