@@ -9,6 +9,8 @@ namespace Shaders
 #include "PixelShader.shh"
 }
 
+#include "GMan.h"
+
 LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
@@ -286,6 +288,8 @@ int WINAPI WinMain(
 
 	float background[4] = { 0.4f,0.4f,0.4f,1.0f };
 
+	GMan gman;
+
 	MSG msg;
 	while (1)
 	{
@@ -299,6 +303,7 @@ int WINAPI WinMain(
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+		gman.Tick();
 		memset(pBuffer, 0, sizeof(Color) * 144 * 160);
 		D3D11_MAPPED_SUBRESOURCE msr;
 		if (FAILED(pContext->Map(pTex.Get(), 0u,
@@ -309,7 +314,7 @@ int WINAPI WinMain(
 		Color* pmb = (Color*)msr.pData;
 		for (int y = 0; y < 144; y++)
 		{
-			memcpy(&pmb[y * 144], &pBuffer[y * 144], sizeof(Color) * 160);
+			memcpy(&pmb[y * 160], &pBuffer[y * 160], sizeof(Color) * 160);
 		}
 		pContext->Unmap(pTex.Get(), 0u);
 		pContext->ClearRenderTargetView(pTargetView.Get(), background);
