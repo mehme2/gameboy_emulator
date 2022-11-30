@@ -289,6 +289,8 @@ int WINAPI WinMain(
 	float background[4] = { 0.4f,0.4f,0.4f,1.0f };
 
 	GMan gman;
+	gman.LoadRom("rom.gb");
+	gman.SetPixelBuffer(pBuffer);
 
 	MSG msg;
 	while (1)
@@ -303,8 +305,8 @@ int WINAPI WinMain(
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-		gman.Tick();
 		memset(pBuffer, 0, sizeof(Color) * 144 * 160);
+		gman.DoFrame();
 		D3D11_MAPPED_SUBRESOURCE msr;
 		if (FAILED(pContext->Map(pTex.Get(), 0u,
 			D3D11_MAP_WRITE_DISCARD, 0u, &msr)))

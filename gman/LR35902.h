@@ -5,21 +5,21 @@
 class LR35902
 {
 public:
-	void BindBus(Bus& bus);
+	LR35902(Bus& bus);
 	void Tick();
 	bool Stopped();
 private:
-	Bus bus;
+	Bus& bus;
 	uint8_t AF[2];
 	uint8_t BC[2];
 	uint8_t DE[2]; 
 	uint8_t HL[2];
 	uint16_t PC;
 	uint16_t SP;
-	unsigned int sleep;
-	bool stop;
-	bool halt;
-	bool interrupt;
+	unsigned int sleep = 0;
+	bool stop = false;
+	bool halt = false;
+	bool interrupt = false;
 private:
 	uint8_t Fetch();
 	uint16_t Fetch16();

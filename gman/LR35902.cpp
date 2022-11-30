@@ -23,16 +23,23 @@
 #define FLAG_SET 0xFF
 #define FLAG_CLEAR 0x00
 
-void LR35902::BindBus(Bus& bus)
+LR35902::LR35902(Bus& bus)
+	:
+	bus(bus)
 {
-	this->bus = bus;
+	GetRegister16(REGISTER_AF) = 0;
+	GetRegister16(REGISTER_BC) = 0;
+	GetRegister16(REGISTER_DE) = 0;
+	GetRegister16(REGISTER_HL) = 0;
+	PC = 0x0100;
+	SP = 0;
 }
 
 void LR35902::Tick()
 {
 	if (!stop && !halt)
 	{
-		if (sleep > 0)
+		if (sleep <= 0)
 		{
 			uint8_t instruction = Fetch();
 			switch (instruction)
