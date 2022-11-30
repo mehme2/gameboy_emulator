@@ -37,11 +37,12 @@ public:
 		size_t size = rom.tellg();
 		rom.seekg(0, rom.beg);
 		pRom = new uint8_t[size];
-		for (int i = 0;i < size;i++)
+		/*for (int i = 0;i < size;i++)
 		{
 			rom >> b;
 			pRom[i] = b;
-		}
+		}*/
+		rom.read((char*)pRom, size);
 		rom.close();
 		bus.BindRom(pRom, size);
 	}

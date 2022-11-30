@@ -10,7 +10,7 @@ public:
 	Bus()
 	{
 		memBuf = new uint8_t[0x10000]; 
-		memBuf[0xFF41] = 0x00;
+		memBuf[0xFF41] = 0x01;
 	}
 	~Bus()
 	{
@@ -18,8 +18,8 @@ public:
 	}
 	uint8_t Read(uint16_t addr)
 	{
-		if (addr >= 0 && addr <= 0xFF)
-		{ 
+		if (addr >= 0 && addr <= 0xFFFF)
+		{
 			return memBuf[addr];
 		}
 		else
