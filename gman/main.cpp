@@ -289,7 +289,7 @@ int WINAPI WinMain(
 	float background[4] = { 0.4f,0.4f,0.4f,1.0f };
 
 	GMan gman;
-	gman.LoadRom("tetris.gb");
+	gman.LoadRom("marioland.gb");
 	gman.SetPixelBuffer(pBuffer);
 
 	MSG msg;

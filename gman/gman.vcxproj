@@ -143,8 +143,11 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Bus.cpp" />
+    <ClCompile Include="GMan.cpp" />
     <ClCompile Include="LR35902.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PPU.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PixelShader.hlsl">
@@ -172,6 +175,7 @@
     <ClInclude Include="Bus.h" />
     <ClInclude Include="GMan.h" />
     <ClInclude Include="LR35902.h" />
+    <ClInclude Include="PPU.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
