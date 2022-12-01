@@ -63,7 +63,7 @@ void Bus::Write(uint16_t addr, uint8_t val)
 		memcpy(memBuf + 0xFE00, memBuf + int(val) * 0x100, 0x100);
 		break;
 	}
-	if (addr >= 0 && addr <= 0xFF)
+	if (addr >= 0 && addr <= 0xFFFF)
 	{
 		memBuf[addr] = val;
 	}
@@ -86,7 +86,7 @@ void Bus::BindRom(void* pRom, size_t size)
 
 void Bus::PPUWrite(uint16_t addr, uint8_t val)
 {
-	if (addr >= 0 && addr <= 0xFF)
+	if (addr >= 0 && addr <= 0xFFFF)
 	{
 		memBuf[addr] = val;
 	}
