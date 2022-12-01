@@ -3,7 +3,7 @@
 Bus::Bus()
 {
 	memBuf = new uint8_t[0x10000];
-	memBuf[0xFF44] = 0x00;
+	memset(memBuf, 0, 0x10000);
 }
 
 Bus::~Bus()
@@ -51,41 +51,17 @@ void Bus::Write(uint16_t addr, uint8_t val)
 	{
 		return;
 	}
-	else if (addr < 0xA000)
-	{
-		
-	}
-	else if (addr < 0xC000)
-	{
 
-	}
-	else if (addr < 0xD000)
+	switch (addr)
 	{
-
-	}
-	else if (addr < 0xFE00)
-	{
-
-	}
-	else if (addr < 0xFF00)
-	{
-
-	}
-	else if (addr < 0xFF80)
-	{
-
-	}
-	else if (addr < 0xFFFF)
-	{
-
-	}
-	else
-	{
-
-	}
-	if (addr == 0xFF46 && val <= 0xDF)
-	{
+	case 0xFF41:
+		memBuf[addr] = (memBuf[addr] & 0x07) | (val & 0xF8);
+		return;
+	case 0xFF44:
+		return;
+	case 0xFF46:
 		memcpy(memBuf + 0xFE00, memBuf + int(val) * 0x100, 0x100);
+		break;
 	}
 	if (addr >= 0 && addr <= 0xFF)
 	{
@@ -106,4 +82,12 @@ void Bus::BindRom(void* pRom, size_t size)
 	romSize = size;
 	rom = (uint8_t*)pRom;
 	memcpy(memBuf, rom, 0x8000);
+}
+
+void Bus::PPUWrite(uint16_t addr, uint8_t val)
+{
+	if (addr >= 0 && addr <= 0xFF)
+	{
+		memBuf[addr] = val;
+	}
 }

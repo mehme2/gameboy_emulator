@@ -31,6 +31,7 @@ public:
 	void Tick();
 private:
 	void SetMode(int mode); 
+	void UpdateStat();
 private:
 	Bus& bus;
 	uint8_t* pBuffer;
@@ -49,4 +50,5 @@ private:
 	Sprite sprites[10];
 	Pixel bgFIFO[16];
 	Pixel sprFIFO[16];
+	bool statLine = false;
 };

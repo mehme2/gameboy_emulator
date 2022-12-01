@@ -37,6 +37,48 @@ LR35902::LR35902(Bus& bus)
 
 void LR35902::Tick()
 {
+	if (interrupt)
+	{
+		uint8_t flag = bus.Read(0xFFFF) & bus.Read(0xFF0F) & 0x1F;
+		if(flag != 0)
+		{
+			halt = false;
+			stop = false;
+			interrupt = false;
+			uint16_t addr;
+			uint8_t mask;
+			if ((flag & 0x01) != 0)
+			{
+				addr = 0x0040;
+				mask = 0x01;
+			}
+			else if ((flag & 0x02) != 0)
+			{
+				addr = 0x0048 ;
+				mask = 0x02;
+			}
+			else if ((flag & 0x04) != 0)
+			{
+				addr = 0x0050;
+				mask = 0x04; 
+			}
+			else if ((flag & 0x08) != 0)
+			{
+				addr = 0x0058;
+				mask = 0x08;
+			}
+			else
+			{
+				addr = 0x0060;
+				mask = 0x10; 
+			}
+			SP -= 2;
+			bus.Write16(SP, PC);
+			PC = addr;
+			bus.Write(0xFF0F, bus.Read(0xFF0F) & ~mask);
+			sleep = 20;
+		}
+	}
 	if (!stop && !halt)
 	{
 		if (sleep <= 0)
@@ -109,6 +151,7 @@ void LR35902::Tick()
 				break;
 			case 0x10:// STOP 0
 				stop = true;
+				PC++;
 				break;
 			case 0x11:// LD DE,d16
 				GetRegister16(REGISTER_DE) = Fetch16();

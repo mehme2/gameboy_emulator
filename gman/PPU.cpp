@@ -9,6 +9,8 @@
 #define LYC 0xFF45
 #define WY 0xFF4A
 #define WX 0xFF4B
+#define IF 0xFF0F
+#define IE 0xFFFF
 
 PPU::PPU(Bus& bus)
 	:
@@ -131,7 +133,7 @@ void PPU::Tick()
 					if (x >= 20)
 					{
 						SetMode(0);
-						bus.Write(LY, bus.Read(LY) + 1);
+						bus.PPUWrite(LY, bus.Read(LY) + 1);
 						if (bus.Read(LY) >= 144)
 						{
 							SetMode(1);
@@ -155,5 +157,29 @@ void PPU::Tick()
 void PPU::SetMode(int mode)
 {
 	this->mode = mode;
-	bus.Write(0xFF41, mode | (bus.Read(0xFF41) & 0xFC));
+	bus.PPUWrite(STAT, mode | (bus.Read(STAT) & 0xFC));
+	if (mode == 1)
+	{
+		bus.PPUWrite(IF, bus.Read(IF) | 0x01);
+	}
+	UpdateStat();
+}
+
+void PPU::UpdateStat()
+{
+	if (bus.Read(LY) == bus.Read(LYC))
+	{
+		bus.PPUWrite(STAT, bus.Read(STAT) | 0x04);
+	}
+	else
+	{
+		bus.PPUWrite(STAT, bus.Read(STAT) & ~0x04);
+	}
+	bool lineOld = statLine;
+	auto stat = bus.Read(STAT);
+	statLine = ((stat & 0x40) != 0 && (stat & 0x04) != 0) || (((stat & 0x20) != 0) && (mode == 2)) || (((stat & 0x10) != 0) && (mode == 1)) || (((stat & 0x08) != 0) && (mode == 0));
+	if (lineOld == false && statLine == true)
+	{
+		bus.PPUWrite(IE, bus.Read(IE) | 0x02);
+	}
 }
