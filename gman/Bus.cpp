@@ -54,13 +54,16 @@ void Bus::Write(uint16_t addr, uint8_t val)
 
 	switch (addr)
 	{
+	case 0xFF04:
+		memBuf[0xFF04] = 0;
+		return;
 	case 0xFF41:
-		memBuf[addr] = (memBuf[addr] & 0x07) | (val & 0xF8);
+		memBuf[0xFF41] = (memBuf[0xFF41] & 0x07) | (val & 0xF8);
 		return;
 	case 0xFF44:
 		return;
 	case 0xFF46:
-		memcpy(memBuf + 0xFE00, memBuf + int(val) * 0x100, 0x100);
+		memcpy(memBuf + 0xFE00, memBuf + val * 0x100, 0x100);
 		break;
 	}
 	if (addr >= 0 && addr <= 0xFFFF)
@@ -86,7 +89,7 @@ void Bus::BindRom(void* pRom, size_t size)
 
 void Bus::PPUWrite(uint16_t addr, uint8_t val)
 {
-	if (addr >= 0 && addr <= 0xFFFF)
+	if (addr >= 0x8000 && addr <= 0xFFFF)
 	{
 		memBuf[addr] = val;
 	}
