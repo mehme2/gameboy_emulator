@@ -133,12 +133,7 @@ void PPU::Tick()
 					if (x >= 20)
 					{
 						SetMode(0);
-						bus.PPUWrite(LY, bus.Read(LY) + 1);
-						if (bus.Read(LY) >= 144)
-						{
-							SetMode(1);
-							x = 0;
-						}
+						x = 0;
 					}
 				}
 				break;
@@ -156,13 +151,16 @@ void PPU::Tick()
  
 void PPU::SetMode(int mode)
 {
-	this->mode = mode;
-	bus.PPUWrite(STAT, mode | (bus.Read(STAT) & 0xFC));
-	if (mode == 1)
+	if (mode != this->mode)
 	{
-		bus.PPUWrite(IF, bus.Read(IF) | 0x01);
+		this->mode = mode;
+		bus.PPUWrite(STAT, mode | (bus.Read(STAT) & 0xFC));
+		if (mode == 1)
+		{
+			bus.PPUWrite(IF, bus.Read(IF) | 0x01);
+		}
+		UpdateStat();
 	}
-	UpdateStat();
 }
 
 void PPU::UpdateStat()

@@ -13,6 +13,15 @@ void GMan::DoFrame()
 	static int timCount;
 	for (int y = 0; y < 154;y++)
 	{
+		bus.memBuf[0xFF44] = y;
+ 		if (y < 144)
+		{
+			ppu.SetMode(2);
+		}
+		else if (y == 144)
+		{
+			ppu.SetMode(1);
+		}
 		for (int i = 0; i < 456; i++)
 		{
 			Tick();
@@ -50,14 +59,18 @@ void GMan::DoFrame()
 				}
 			}
 		}
-		if (ppu.mode != 1)
-		{
-			ppu.SetMode(2);
-		}
 	}
 	ppu.SetMode(2);
 	bus.memBuf[0xFF44] = 0;
-	memcpy(ptr, bus.memBuf + 0x0000, 0xFFFF);
+	//memcpy(ptr, bus.memBuf + 0x0000, 0xFFFF);
+	/*for (int y = 0; y < 144;y++)
+	{
+		for (int x = 0;x < 160;x++)
+		{
+			((int*)ptr)[(y * 160 + x)] = 
+				(bus.memBuf[0x8000 + ((y / 8) * 32 + x / 8) * 16 + ((y % 8) * 2)] >> (7 - (x % 8)) & 0x1) == 0 ? 0 : 0xFFFFFFFF;
+		}
+	}*/
 }
 
 void GMan::Tick()

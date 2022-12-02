@@ -23,6 +23,15 @@ uint8_t Bus::Read(uint16_t addr)
 	}
 }
 
+uint16_t Bus::Read16(uint16_t addr)
+{
+	uint16_t low = Read(addr);
+	uint16_t high = Read(addr + 1);
+	high <<= 8;
+	high |= low;
+	return high;
+}
+
 void Bus::Write(uint16_t addr, uint8_t val)
 {
 	if (addr < 0x4000)

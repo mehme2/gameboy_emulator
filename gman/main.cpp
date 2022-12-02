@@ -289,7 +289,7 @@ int WINAPI WinMain(
 	float background[4] = { 0.4f,0.4f,0.4f,1.0f };
 
 	GMan gman;
-	gman.LoadRom("marioland.gb");
+	gman.LoadRom("cputest.gb");
 	gman.SetPixelBuffer(pBuffer);
 
 	MSG msg;
@@ -322,5 +322,5 @@ int WINAPI WinMain(
 		pContext->ClearRenderTargetView(pTargetView.Get(), background);
 		pContext->DrawIndexed(6, 0, 0);
 		pSwapChain->Present(1, 0);
-	}
+ 	}
 }
