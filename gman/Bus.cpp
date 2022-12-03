@@ -4,6 +4,8 @@ Bus::Bus()
 {
 	memBuf = new uint8_t[0x10000];
 	memset(memBuf, 0, 0x10000);
+	//memBuf[0x9000+4] = 0xFF;
+	memBuf[0xFF41] = 0x81;
 }
 
 Bus::~Bus()
@@ -36,7 +38,7 @@ void Bus::Write(uint16_t addr, uint8_t val)
 {
 	if (addr < 0x4000)
 	{
-		if (rom[0x0147] == 0x01)
+		if (rom[0x0147] <= 0x03 && rom[0x0147] >= 0x01)
 		{
 			if (addr < 0x2000)
 			{
@@ -44,10 +46,10 @@ void Bus::Write(uint16_t addr, uint8_t val)
 			}
 			else
 			{
-				uint8_t mask = 0x1F;
-				while ((val & mask) > romSize / 0x4000)
+				uint8_t mask = 0x01;
+				while (mask < romSize / 0x4000)
 				{
-					mask >>= 1;
+					mask = (mask << 1) | 0x01;
 				}
 				uint16_t bank = val & mask;
 				if (bank == 0) bank = 1;

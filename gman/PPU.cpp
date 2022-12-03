@@ -49,7 +49,7 @@ void PPU::Tick()
 					}
 				}
 				oamIndex++;
-				if (oamIndex >= 40)
+				if (oamIndex > 40)
 				{
 					oamIndex = 0;
 					sprIndex = 0;
@@ -64,16 +64,22 @@ void PPU::Tick()
 				{
 				case 1:
 				{
+					if (bus.Read(LY) == bus.Read(WY))
+					{
+						wy = true;
+					}
 					bool window = wy && (bus.Read(LCDC) & 0x20) >> 5 && wy && (bus.Read(WX) - x * 8) < 8 && ((bus.Read(WX) - x * 8) >= 0);
 					fetchAddr = 0x9800;
-					if ((window && ((bus.Read(LCDC) & 0x40) >> 6)) || (!window && ((bus.Read(LCDC) & 0x08) >> 3)))
+ 					if ((window && ((bus.Read(LCDC) & 0x40) >> 6)) || (!window && ((bus.Read(LCDC) & 0x08) >> 3)))  
 					{
-						fetchAddr = 0x9C00;
+						  fetchAddr = 0x9C00;
 					}
 					fetcherX = !window ? bus.Read(SCX) / 8 + x : (x * 8 - (bus.Read(WX) - 7)) / 8;
 					fetcherX &= 0x1F;
 					fetcherY = !window ? bus.Read(SCY) + bus.Read(LY) : bus.Read(LY) - (bus.Read(WY) - 7);
 					fetcherY &= 0xFF;
+					//fetcherX = x + bus.Read(SCX)/8; 
+					//fetcherY = bus.Read(LY) + bus.Read(SCY);
 					sleep = 2;
 					fetchStep++;
 				}
@@ -83,7 +89,7 @@ void PPU::Tick()
 					bool lcdc4 = ((bus.Read(LCDC) & 0x10)) >> 4;
 					uint8_t tileIndex = bus.Read(fetchAddr + ((fetcherY / 8) * 32 + fetcherX));
 					uint16_t tileAddr = lcdc4 ? 0x8000 + tileIndex * 16 + (fetcherY % 8) * 2
-						: 0x8800 + char(tileIndex) * 16 + (fetcherY % 8) * 2;
+						: 0x9000 + char(tileIndex) * 16 + (fetcherY % 8) * 2;
 					fetchLow = bus.Read(tileAddr);
 					fetchHigh = bus.Read(tileAddr + 1);
 					sleep = 4;
@@ -99,7 +105,7 @@ void PPU::Tick()
 					for (int i = 7; i >= 0; i--)
 					{
 						Pixel px;
-						px.color = ((fetchLow >> i) & 0x01) | (fetchHigh >> (i - 1) & 0x02);
+						px.color = ((fetchLow >> i) & 0x01) | ((fetchHigh >> i) << 1 & 0x02);
 						bgFIFO[7 - i] = px;
 					}
 					sleep = 2;
@@ -127,12 +133,11 @@ void PPU::Tick()
 							break;
 						}
 					}
-					sleep = 2;
 					fetchStep = 1;
 					x++;
-					if (x >= 20)
+					if (x > 20)
 					{
-						SetMode(0);
+						SetMode(0);  
 						x = 0;
 					}
 				}
@@ -158,6 +163,7 @@ void PPU::SetMode(int mode)
 		if (mode == 1)
 		{
 			bus.PPUWrite(IF, bus.Read(IF) | 0x01);
+			wy = false;
 		}
 		UpdateStat();
 	}

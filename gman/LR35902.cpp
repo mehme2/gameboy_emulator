@@ -54,7 +54,7 @@ void LR35902::Tick()
 			}
 			else if ((flag & 0x02) != 0)
 			{
-				addr = 0x0048 ;
+				addr = 0x0048;
 				mask = 0x02;
 			}
 			else if ((flag & 0x04) != 0)
