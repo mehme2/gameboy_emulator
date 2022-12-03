@@ -120,19 +120,34 @@ void PPU::Tick()
 					for (int i = 0; i < 8; i++)
 					{
 						uint8_t color = (palette >> (bgFIFO[i].color * 2)) & 0x03;
-						switch (color)
+						/*switch (color)
 						{
 						case 0:
 							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0xFF,0xFF,0xFF,0xFF };
 							break;
 						case 1:
-							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0xAA,0xAA,0xAA,0xAA };
+							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0xAA,0xAA,0xAA,0xFF };
 							break;
 						case 2:
-							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x55,0x55,0x55,0x55 };
+							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x55,0x55,0x55,0xFF };
 							break;
 						case 3:
-							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x00,0x00,0x00,0x00 };
+							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x00,0x00,0x00,0xFF };
+							break;
+						}*/
+						switch (color)
+						{
+						case 0:
+							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x0F,0xBC,0x9B,0xFF };
+							break;
+						case 1:
+							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x0F,0xAC,0x8B,0xFF };
+							break;
+						case 2:
+							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x30,0x62,0x30,0xFF };
+							break;
+						case 3:
+							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x0F,0x38,0x0F,0xFF };
 							break;
 						}
 					}
