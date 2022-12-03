@@ -998,7 +998,7 @@ void LR35902::Tick()
 				if (GetFlag(FLAG_Z) == 0)
 				{
 					SP -= 2;
-					bus.Write16(SP, PC);
+					bus.Write16(SP, PC + 2);
 					PC = Fetch16();
 					sleep = 24;
 				}
@@ -1069,14 +1069,14 @@ void LR35902::Tick()
 				else
 				{
 					SP -= 2;
-					bus.Write16(SP, PC);
+					bus.Write16(SP, PC + 2);
 					PC = Fetch16();
 					sleep = 24;
 				}
 				break;
 			case 0xCD:// CALL a16
 				SP -= 2;
-				bus.Write16(SP, PC);
+				bus.Write16(SP, PC + 2);
 				PC = Fetch16();
 				sleep = 24;
 				break;
@@ -1131,7 +1131,7 @@ void LR35902::Tick()
 				if (GetFlag(FLAG_C) == 0)
 				{
 					SP -= 2;
-					bus.Write16(SP, PC);
+					bus.Write16(SP, PC + 2);
 					PC = Fetch16();
 					sleep = 24;
 				}
@@ -1202,7 +1202,7 @@ void LR35902::Tick()
 				else
 				{
 					SP -= 2;
-					bus.Write16(SP, PC);
+					bus.Write16(SP, PC + 2);
 					PC = Fetch16();
 					sleep = 24;
 				}

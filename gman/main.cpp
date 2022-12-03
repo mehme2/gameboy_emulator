@@ -289,7 +289,7 @@ int WINAPI WinMain(
 	float background[4] = { 0.4f,0.4f,0.4f,1.0f };
 
 	GMan gman;
-	gman.LoadRom("cputest.gb");
+	gman.LoadRom("drmario.gb");
 	//gman.LoadBootRom("bootrom.gb");
 	gman.SetPixelBuffer(pBuffer);
 
