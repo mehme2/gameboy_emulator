@@ -1678,12 +1678,13 @@ void LR35902::PrefixCB(uint8_t code)
 		else
 		{
 			uint8_t r = bus.Read(GetRegister16(REGISTER_HL));
-			SetFlag(FLAG_C, (r & 0x80) == 0 ? FLAG_CLEAR : FLAG_SET);
+			uint8_t oldBit = r & 0x80;
+			SetFlag(FLAG_C, oldBit == 0 ? FLAG_CLEAR : FLAG_SET);
 			SetFlag(FLAG_N, FLAG_CLEAR);
 			SetFlag(FLAG_H, FLAG_CLEAR);
 			SetFlag(FLAG_Z, FLAG_CLEAR);
 			r <<= 1;
-			r |= (0x01 & GetFlag(FLAG_C));
+			r |= (oldBit>>7);
 			if (r == 0)
 			{
 				SetFlag(FLAG_Z, FLAG_SET);
@@ -1703,12 +1704,13 @@ void LR35902::PrefixCB(uint8_t code)
 		else
 		{
 			uint8_t r = bus.Read(GetRegister16(REGISTER_HL));
-			SetFlag(FLAG_C, (r & 0x01) == 0 ? FLAG_CLEAR : FLAG_SET);
+			uint8_t oldBit = r & 0x01;
+			SetFlag(FLAG_C, oldBit == 0 ? FLAG_CLEAR : FLAG_SET);
 			SetFlag(FLAG_N, FLAG_CLEAR);
 			SetFlag(FLAG_H, FLAG_CLEAR);
 			SetFlag(FLAG_Z, FLAG_CLEAR);
 			r >>= 1;
-			r |= (0x80 & GetFlag(FLAG_C));
+			r |= (oldBit << 7);
 			if (r == 0)
 			{
 				SetFlag(FLAG_Z, FLAG_SET);
@@ -1719,9 +1721,7 @@ void LR35902::PrefixCB(uint8_t code)
 	case 0x10: // RL X
 		if (reg != 0xFF)
 		{
-			auto oldC = GetFlag(FLAG_C);
 			RotateRegisterLeftCarry(reg);
-			GetRegister(reg) |= (0x01 & oldC);
 			if (GetRegister(reg) == 0)
 			{
 				SetFlag(FLAG_Z, FLAG_SET);
@@ -1744,13 +1744,11 @@ void LR35902::PrefixCB(uint8_t code)
 			}
 			bus.Write(GetRegister16(REGISTER_HL), r);
 		}
-		break; 
+		break;
 	case 0x18: // RR X
 		if (reg != 0xFF)
 		{
-			auto oldC = GetFlag(FLAG_C);
 			RotateRegisterRightCarry(reg);
-			GetRegister(reg) |= (0x80 & oldC);
 			if (GetRegister(reg) == 0)
 			{
 				SetFlag(FLAG_Z, FLAG_SET);
@@ -1806,6 +1804,10 @@ void LR35902::PrefixCB(uint8_t code)
 			RotateRegisterRight(reg);
 			GetRegister(reg) &= 0x7F;
 			GetRegister(reg) |= msb;
+			if (GetRegister(reg) == 0)
+			{
+				SetFlag(FLAG_Z, FLAG_SET);
+			}
 		}
 		else
 		{
@@ -1817,6 +1819,10 @@ void LR35902::PrefixCB(uint8_t code)
 			SetFlag(FLAG_Z, FLAG_CLEAR);
 			r >>= 1;
 			r |= msb;
+			if (r == 0)
+			{
+				SetFlag(FLAG_Z, FLAG_SET);
+			}
 			bus.Write(GetRegister16(REGISTER_HL), r);
 		}
 		break;
