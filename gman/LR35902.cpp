@@ -31,7 +31,7 @@ LR35902::LR35902(Bus& bus)
 	GetRegister16(REGISTER_BC) = 0;
 	GetRegister16(REGISTER_DE) = 0;
 	GetRegister16(REGISTER_HL) = 0;
-	PC = 0x0100;
+	PC = 0x0000;
 	SP = 0;
 }
 
@@ -110,7 +110,7 @@ void LR35902::Tick()
 				sleep = 4;
 				break;
 			case 0x06:// LD B,d8
-				GetRegister(REGISTER_B) = Fetch();
+ 				GetRegister(REGISTER_B) = Fetch();
 				sleep = 8;
 				break;
 			case 0x07:// RLCA
@@ -615,7 +615,7 @@ void LR35902::Tick()
 				halt = true;
 				break;
 			case 0x77:// LD (HL),A
-				bus.Write(GetRegister16(REGISTER_HL), GetRegister(REGISTER_A));
+ 				bus.Write(GetRegister16(REGISTER_HL), GetRegister(REGISTER_A)); 
 				sleep = 8;
 				break;
 			case 0x78:// LD A,B
@@ -1226,7 +1226,7 @@ void LR35902::Tick()
 				sleep = 16;
 				break;
 			case 0xE0:// LDH (a8),A
- 				bus.Write(0xFF00 + Fetch(), GetRegister(REGISTER_A));
+  				bus.Write(0xFF00 + Fetch(), GetRegister(REGISTER_A));
 				sleep = 12;
 				break;
 			case 0xE1:// POP HL
@@ -1347,7 +1347,7 @@ void LR35902::Tick()
 				sleep = 8;
 				break;
 			case 0xFA:// LD A,(a16)
-				GetRegister(REGISTER_A) = bus.Read(Fetch16());
+ 				GetRegister(REGISTER_A) = bus.Read(Fetch16());
 				sleep = 16;
 				break;
 			case 0xFB:// EI

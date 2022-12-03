@@ -12,11 +12,13 @@ public:
 	void DoFrame();
 	void Tick();
 	void SetPixelBuffer(void* ptr);
-	void LoadRom(const char* path); 
+	void LoadRom(const char* path);
+	void LoadBootRom(const char* path);
 private:
 	Bus bus;
 	LR35902 cpu;
-	PPU ppu;          
+	PPU ppu;
 	void* ptr = nullptr;
 	uint8_t* pRom;
+	uint8_t* pBoot;
 };

@@ -15,10 +15,15 @@ public:
 	void Write(uint16_t addr, uint8_t val);
 	void Write16(uint16_t addr, uint16_t val);
 	void BindRom(void* pRom, size_t size);
+	void BindBootRom(void* pRom, size_t size); 
 private:
 	void PPUWrite(uint16_t addr, uint8_t val);
 	uint8_t* memBuf;
 	uint8_t* rom;
+	uint8_t* boot;
 	bool ramEnabled;
 	size_t romSize;
+	size_t bootSize;
+	uint8_t trash = 0xFF;
+	bool bootRom; 
 };

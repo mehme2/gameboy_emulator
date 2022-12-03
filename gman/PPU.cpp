@@ -70,13 +70,13 @@ void PPU::Tick()
 					}
 					bool window = wy && (bus.Read(LCDC) & 0x20) >> 5 && wy && (bus.Read(WX) - x * 8) < 8 && ((bus.Read(WX) - x * 8) >= 0);
 					fetchAddr = 0x9800;
- 					if ((window && ((bus.Read(LCDC) & 0x40) >> 6)) || (!window && ((bus.Read(LCDC) & 0x08) >> 3)))  
+ 					if ((window && ((bus.Read(LCDC) & 0x40) >> 6)) || (!window && ((bus.Read(LCDC) & 0x08) >> 3)))
 					{
 						  fetchAddr = 0x9C00;
 					}
 					fetcherX = !window ? bus.Read(SCX) / 8 + x : (x * 8 - (bus.Read(WX) - 7)) / 8;
 					fetcherX &= 0x1F;
-					fetcherY = !window ? bus.Read(SCY) + bus.Read(LY) : bus.Read(LY) - (bus.Read(WY) - 7);
+  					fetcherY = !window ? bus.Read(SCY) + bus.Read(LY) : bus.Read(LY) - (bus.Read(WY) - 7);
 					fetcherY &= 0xFF;
 					//fetcherX = x + bus.Read(SCX)/8; 
 					//fetcherY = bus.Read(LY) + bus.Read(SCY);

@@ -60,7 +60,7 @@ int WINAPI WinMain(
 	HWND hWnd = CreateWindowEx(
 		0, wClassName, "GMAN",
 		WS_BORDER | WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
-		CW_USEDEFAULT, CW_USEDEFAULT, width, height, NULL, NULL, hInstance, NULL);
+		CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top, NULL, NULL, hInstance, NULL);
 
 	ShowWindow(hWnd, nCmdShow);
 
@@ -117,8 +117,8 @@ int WINAPI WinMain(
 	pContext->OMSetRenderTargets(1, pTargetView.GetAddressOf(), NULL);
 
 	D3D11_VIEWPORT vp;
-	vp.Width = width;
-	vp.Height = height;
+	vp.Width = float(width);
+	vp.Height = float(height);
 	vp.MinDepth = 0;
 	vp.MaxDepth = 1;
 	vp.TopLeftX = 0;
@@ -132,10 +132,10 @@ int WINAPI WinMain(
 		dx::XMFLOAT2 texCoord;
 	} vertices[4];
 
-	vertices[0].pos = { -1.0f, 1.0f, 0.5f };
-	vertices[1].pos = { 1.0f, 1.0f, 0.5f };
-	vertices[2].pos = { -1.0f, -1.0f, 0.5f };
-	vertices[3].pos = { 1.0f, -1.0f, 0.5f };
+	vertices[0].pos = { -1.0f, 1.0f, 0.0f };
+	vertices[1].pos = { 1.0f, 1.0f, 0.0f };
+	vertices[2].pos = { -1.0f, -1.0f, 0.0f };
+	vertices[3].pos = { 1.0f, -1.0f, 0.0f };
 
 	vertices[0].texCoord = { 0.0f, 0.0f };
 	vertices[1].texCoord = { 1.0f, 0.0f };
@@ -289,7 +289,8 @@ int WINAPI WinMain(
 	float background[4] = { 0.4f,0.4f,0.4f,1.0f };
 
 	GMan gman;
-	gman.LoadRom("marioland.gb"); 
+	gman.LoadRom("cputest.gb");
+	gman.LoadBootRom("bootrom.gb");
 	gman.SetPixelBuffer(pBuffer);
 
 	MSG msg;

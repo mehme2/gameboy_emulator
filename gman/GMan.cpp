@@ -26,7 +26,7 @@ void GMan::DoFrame()
 		{
 			Tick();
 			divCount = (divCount + 1) & 256;
-			if (divCount = 0)
+			if (divCount == 0)
 			{
 				bus.memBuf[0xFF04]++;
 			}
@@ -102,4 +102,18 @@ void GMan::LoadRom(const char* path)
 	rom.read((char*)pRom, size);
 	rom.close();
 	bus.BindRom(pRom, size);
+}
+
+void GMan::LoadBootRom(const char* path)
+{
+	uint8_t b;
+	std::ifstream rom;
+	rom.open(path, std::ios::binary);
+	rom.seekg(0, rom.end);
+	size_t size = rom.tellg();
+	rom.seekg(0, rom.beg);
+	pBoot = new uint8_t[size];
+	rom.read((char*)pBoot, size);
+	rom.close();
+	bus.BindBootRom(pBoot, size);
 }
