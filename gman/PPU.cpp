@@ -7,6 +7,7 @@
 #define SCX 0xFF43
 #define LY 0xFF44
 #define LYC 0xFF45
+#define BGP 0xFF47
 #define WY 0xFF4A
 #define WX 0xFF4B
 #define IF 0xFF0F
@@ -115,21 +116,23 @@ void PPU::Tick()
 				case 5:
 				{
 					auto y = bus.Read(LY);
+					auto palette = bus.Read(BGP);
 					for (int i = 0; i < 8; i++)
 					{
-						switch (bgFIFO[i].color)
+						uint8_t color = (palette >> (bgFIFO[i].color * 2)) & 0x03;
+						switch (color)
 						{
 						case 0:
-							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0,0,0,0 };
+							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0xFF,0xFF,0xFF,0xFF };
 							break;
 						case 1:
-							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x55,0x55,0x55,0x55 };
-							break;
-						case 2:
 							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0xAA,0xAA,0xAA,0xAA };
 							break;
+						case 2:
+							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x55,0x55,0x55,0x55 };
+							break;
 						case 3:
-							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0xFF,0xFF,0xFF,0xFF };
+							((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x00,0x00,0x00,0x00 };
 							break;
 						}
 					}
