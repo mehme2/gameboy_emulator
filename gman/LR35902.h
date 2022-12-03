@@ -4,6 +4,7 @@
 
 class LR35902
 {
+	friend class GMan;
 public:
 	LR35902(Bus& bus);
 	void Tick();

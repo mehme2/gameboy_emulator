@@ -26,7 +26,7 @@ void PPU::BindPixelBuffer(void* buf)
 
 void PPU::Tick()
 {
-	if (mode != 1 && mode != 0)
+	if (mode != 1 && mode != 0 && (bus.Read(LCDC) & 0x80) != 0)
 	{
 		if (sleep <= 0)
 		{

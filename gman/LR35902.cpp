@@ -31,7 +31,7 @@ LR35902::LR35902(Bus& bus)
 	GetRegister16(REGISTER_BC) = 0;
 	GetRegister16(REGISTER_DE) = 0;
 	GetRegister16(REGISTER_HL) = 0;
-	PC = 0x0000;
+	PC = 0x0100;
 	SP = 0;
 }
 

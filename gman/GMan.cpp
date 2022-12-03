@@ -116,4 +116,5 @@ void GMan::LoadBootRom(const char* path)
 	rom.read((char*)pBoot, size);
 	rom.close();
 	bus.BindBootRom(pBoot, size);
+	cpu.PC = 0x0000;
 }
