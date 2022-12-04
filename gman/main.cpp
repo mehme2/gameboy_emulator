@@ -2,6 +2,7 @@
 #include <d3d11.h>
 #include <wrl.h>
 #include <DirectXMath.h>
+#include <dsound.h>
 
 namespace Shaders
 {
@@ -286,10 +287,69 @@ int WINAPI WinMain(
 	pContext->PSSetSamplers(0u, 1u, pSamplerState.GetAddressOf());
 
 
+	//wrl::ComPtr<IDirectSound> pDS;
+	//if (FAILED(DirectSoundCreate(NULL, pDS.GetAddressOf(), NULL)))
+	//{
+	//	MessageBox(nullptr, "Failed to create sound interface.", "DS Error", MB_OK | MB_ICONWARNING);
+	//}
+	//
+	//DSBUFFERDESC dsDesc;
+	//dsDesc.dwSize = sizeof(dsDesc);
+	//dsDesc.dwFlags = DSBCAPS_CTRLVOLUME;
+	//dsDesc.dwBufferBytes = 16;
+	//dsDesc.dwReserved = 0;
+	//dsDesc.lpwfxFormat = NULL;
+	//dsDesc.guid3DAlgorithm = GUID_NULL;
+	//
+	//wrl::ComPtr<IDirectSoundBuffer> pDSBuf;
+	//HRESULT hr;
+	//if (FAILED(hr=pDS->CreateSoundBuffer(&dsDesc, pDSBuf.GetAddressOf(), NULL)))
+	//{
+	//	MessageBox(nullptr, "Failed to create sound buffer.", "DS Error", MB_OK | MB_ICONWARNING);
+	//}
+	//
+	//uint8_t* pSBuf1;
+	//int bufSize1;
+	//uint8_t* pSBuf2;
+	//int bufSize2;
+	//pDSBuf->Lock(0, 16, (void**)&pSBuf1, (LPDWORD)&bufSize1, (void**)&pSBuf2, (LPDWORD)&bufSize2, DSBLOCK_ENTIREBUFFER);
+	//for (int i = 0;i < 16;i++)
+	//{
+	//	pSBuf1[i] = 0xFF;
+	//}
+	//pDSBuf->Unlock((void**)&pSBuf1, bufSize1, (void**)&pSBuf2, bufSize2);
+
 	float background[4] = { 0.4f,0.4f,0.4f,1.0f };
 
 	GMan gman;
-	gman.LoadRom("drmario.gb");
+
+	char pathBuf[256];
+	OPENFILENAME ofna;
+	ZeroMemory(&ofna, sizeof(ofna));
+	ofna.lStructSize = sizeof(OPENFILENAME);
+	ofna.hwndOwner = hWnd;
+	ofna.hInstance = hInstance;
+	ofna.lpstrFilter = "All\0*.*\0Gameboy ROMs(.gb)\0*.GB\0";
+	ofna.nFilterIndex = 2;
+	ofna.lpstrCustomFilter = NULL;
+	ofna.nMaxCustFilter = 0;
+	ofna.lpstrFile = pathBuf;
+	ofna.lpstrFile[0] = '\0';
+	ofna.nMaxFile = 256;
+	ofna.lpstrFileTitle = NULL;
+	ofna.nMaxFileTitle = 0;
+	ofna.lpstrInitialDir = NULL;
+	ofna.lpstrTitle = NULL;
+	ofna.Flags = OFN_DONTADDTORECENT | OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_READONLY;
+
+	if (GetOpenFileName(&ofna))
+	{
+		gman.LoadRom(pathBuf);
+	}
+	else
+	{
+		gman.LoadRom("tetris.gb");
+	}
 	//gman.LoadBootRom("bootrom.gb");
 	gman.SetPixelBuffer(pBuffer);
 

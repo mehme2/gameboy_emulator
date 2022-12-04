@@ -11,6 +11,10 @@ void GMan::DoFrame()
 {
 	static int divCount;
 	static int timCount;
+	while ((bus.memBuf[0xFF40] & 0x80) == 0)
+	{
+		cpu.Tick();
+	}
 	for (int y = 0; y < 154;y++)
 	{
 		bus.memBuf[0xFF44] = y;
@@ -77,6 +81,10 @@ void GMan::Tick()
 {
 	cpu.Tick();
 	ppu.Tick();
+	while ((bus.memBuf[0xFF40] & 0x80) == 0)
+	{
+		cpu.Tick();
+	}
 }
 
 void GMan::SetPixelBuffer(void* ptr)

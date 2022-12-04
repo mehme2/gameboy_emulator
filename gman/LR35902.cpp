@@ -70,7 +70,7 @@ void LR35902::Tick()
 			else
 			{
 				addr = 0x0060;
-				mask = 0x10; 
+				mask = 0x10;
 			}
 			SP -= 2;
 			bus.Write16(SP, PC);
@@ -1142,7 +1142,7 @@ void LR35902::Tick()
 				}
 				break;
 			case 0xD5:// PUSH DE
-				SP -= 2;
+ 				SP -= 2;
 				bus.Write16(SP, GetRegister16(REGISTER_DE));
 				sleep = 16;
 				break;

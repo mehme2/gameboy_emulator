@@ -69,6 +69,9 @@ void Bus::Write(uint16_t addr, uint8_t val)
 
 	switch (addr)
 	{
+	case 0xFF00:
+		memBuf[0xFF00] = (memBuf[0xFF00] & 0x0F) | (val & 0xF0);
+		break;
 	case 0xFF04:
 		memBuf[0xFF04] = 0;
 		return;
