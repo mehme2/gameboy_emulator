@@ -9,63 +9,11 @@ GMan::GMan()
 
 void GMan::DoFrame()
 {
-	static int divCount;
-	static int timCount;
-	while ((bus.memBuf[0xFF40] & 0x80) == 0)
+	while(!ppu.endFrame)
 	{
-		cpu.Tick();
+		Tick();
 	}
-	for (int y = 0; y < 154;y++)
-	{
-		bus.memBuf[0xFF44] = y;
- 		if (y < 144)
-		{
-			ppu.SetMode(2);
-		}
-		else if (y == 144)
-		{
-			ppu.SetMode(1);
-		}
-		for (int i = 0; i < 456; i++)
-		{
-			Tick();
-			divCount = (divCount + 1) & 256;
-			if (divCount == 0)
-			{
-				bus.memBuf[0xFF04]++;
-			}
-			if ((bus.memBuf[0xFF07] & 0x04) != 0)
-			{
-				int mod;
-				switch (bus.memBuf[0xFF07] & 0x03)
-				{
-					case 0:
-						mod = 1024;
-						break;
-					case 1:
-						mod = 16;
-						break;
-					case 2:
-						mod = 64;
-						break;
-					case 3:
-						mod = 256;
-						break;
-				}
-				timCount = (timCount + 1) & mod;
-				if (timCount == 0)
-				{
-					bus.memBuf[0xFF05]++;
-					if (bus.memBuf[0xFF05] == 0)
-					{
-						bus.memBuf[0xFF0F] |= 0x04;
-					}
-				}
-			}
-		}
-	}
-	ppu.SetMode(2);
-	bus.memBuf[0xFF44] = 0;
+	ppu.endFrame = false;
 	//memcpy(ptr, bus.memBuf + 0x0000, 0xFFFF);
 	/*for (int y = 0; y < 144;y++)
 	{
@@ -79,11 +27,43 @@ void GMan::DoFrame()
 
 void GMan::Tick()
 {
+	static int divCount = 0;
+	static int timCount = 0;
 	cpu.Tick();
 	ppu.Tick();
-	while ((bus.memBuf[0xFF40] & 0x80) == 0)
+	divCount = (divCount + 1) % 256;
+	if (divCount == 0)
 	{
-		cpu.Tick();
+		bus.memBuf[0xFF04]++;
+	}
+	if ((bus.memBuf[0xFF07] & 0x04) != 0)
+	{
+		int mod;
+		switch (bus.memBuf[0xFF07] & 0x03)
+		{
+		case 0:
+			mod = 1024;
+			break;
+		case 1:
+			mod = 16;
+			break;
+		case 2:
+			mod = 64;
+			break;
+		case 3:
+			mod = 256;
+			break;
+		}
+		timCount = (timCount + 1) % mod;
+		if (timCount == 0)
+		{
+			bus.memBuf[0xFF05]++;
+			if (bus.memBuf[0xFF05] == 0)
+			{
+				bus.memBuf[0xFF05] = bus.memBuf[0xFF06];
+				bus.memBuf[0xFF0F] |= 0x04;
+			}
+		}
 	}
 }
 
@@ -95,7 +75,6 @@ void GMan::SetPixelBuffer(void* ptr)
 
 void GMan::LoadRom(const char* path)
 {
-	uint8_t b;
 	std::ifstream rom;
 	rom.open(path, std::ios::binary);
 	rom.seekg(0, rom.end);
@@ -114,7 +93,6 @@ void GMan::LoadRom(const char* path)
 
 void GMan::LoadBootRom(const char* path)
 {
-	uint8_t b;
 	std::ifstream rom;
 	rom.open(path, std::ios::binary);
 	rom.seekg(0, rom.end);

@@ -348,9 +348,17 @@ int WINAPI WinMain(
 	}
 	else
 	{
-		gman.LoadRom("tetris.gb");
+		gman.LoadRom("roms/tetris.gb");
 	}
-	//gman.LoadBootRom("bootrom.gb");
+	bool loadBoot = false;
+	if (loadBoot)
+	{
+		ofna.lpstrFile[0] = '\0';
+		if (GetOpenFileName(&ofna))
+		{
+			gman.LoadBootRom(pathBuf);
+		}
+	}
 	gman.SetPixelBuffer(pBuffer);
 
 	MSG msg;
@@ -382,6 +390,6 @@ int WINAPI WinMain(
 		pContext->Unmap(pTex.Get(), 0u);
 		pContext->ClearRenderTargetView(pTargetView.Get(), background);
 		pContext->DrawIndexed(6, 0, 0);
-		pSwapChain->Present(1, 0);
+		pSwapChain->Present(0, 0);
  	}
 }

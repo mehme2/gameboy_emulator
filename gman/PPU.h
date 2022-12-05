@@ -33,6 +33,8 @@ private:
 	void SetMode(int mode); 
 	void UpdateStat();
 private:
+	int tickCounter = 0;
+	bool endFrame = false;
 	Bus& bus;
 	uint8_t* pBuffer;
 	int mode = 2;

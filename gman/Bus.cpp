@@ -55,7 +55,7 @@ void Bus::Write(uint16_t addr, uint8_t val)
 				{
 					mask = (mask << 1) | 0x01;
 				}
-				uint16_t bank = val & mask;
+				uint8_t bank = val & mask;
 				if (bank == 0) bank = 1;
 				memcpy(memBuf + 0x4000, rom + (bank * 0x4000), 0x4000);
 			}
@@ -74,6 +74,7 @@ void Bus::Write(uint16_t addr, uint8_t val)
 		break;
 	case 0xFF04:
 		memBuf[0xFF04] = 0;
+		memBuf[0xFF05] = 0;
 		return;
 	case 0xFF41:
 		memBuf[0xFF41] = (memBuf[0xFF41] & 0x07) | (val & 0xF8);
@@ -90,25 +91,25 @@ void Bus::Write(uint16_t addr, uint8_t val)
 	memBuf[addr] = val;
  }
 
-void Bus::Write16(uint16_t addr, uint16_t val)
+void Bus:: Write16(uint16_t addr, uint16_t val)
 {
-	uint8_t low = val & 0x00FF;
+	uint8_t low = val & 0x00FF;   
 	uint8_t high = (val & 0xFF00) >> 8;
 	Write(addr, low);
 	Write(addr + 1, high);
 }
 
-void Bus::BindRom(void* pRom, size_t size)
+void Bus::BindRom(uint8_t* pRom, size_t size)
 {
 	romSize = size;
-	rom = (uint8_t*)pRom;
+	rom = pRom;
 	memcpy(memBuf, rom, 0x8000);
 }
 
-void Bus::BindBootRom(void* pRom, size_t size)
+void Bus::BindBootRom(uint8_t* pRom, size_t size)
 {
 	bootSize = size;
-	boot = (uint8_t*)pRom;
+	boot = pRom;
 	bootRom = true;
 }
 

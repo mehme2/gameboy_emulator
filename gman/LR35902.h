@@ -43,6 +43,6 @@ private:
 	void OrRegister(uint8_t lhs, uint8_t rhs);
 	void CpRegister(uint8_t lhs, uint8_t rhs);
 	void AddRegister16(uint8_t lhs, uint8_t rhs);
-	void Restart(uint8_t addr);
+	void Restart(uint16_t addr);
 	void PrefixCB(uint8_t code);
 };
