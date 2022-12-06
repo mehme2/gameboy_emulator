@@ -25,5 +25,6 @@ private:
 	size_t romSize;
 	size_t bootSize;
 	uint8_t trash = 0xFF;
-	bool bootRom; 
+	bool bootRom;
+	uint8_t* keys;
 };

@@ -26,11 +26,7 @@ void PPU::BindPixelBuffer(void* buf)
 
 void PPU::Tick()
 {
-	if ((bus.Read(LCDC) & 0x80) == 0)
-	{
-		tickCounter = 0;
-		return;
-	}
+	tickCounter = (tickCounter + 1) % 456;
 	if (tickCounter == 0)
 	{
 		bus.PPUWrite(LY, (bus.Read(LY) + 1) % 154);
@@ -47,16 +43,15 @@ void PPU::Tick()
 			SetMode(1);
 		}
 	}
-	tickCounter = (tickCounter + 1) % 456;
 	if (sleep <= 0)
 	{
 		switch (mode)
 		{
 		case 0:
-			sleep = 0;
+			sleep = 1;
 			break;
 		case 1:
-			sleep = 0;
+			sleep = 1;
 			break;
 		case 2:
 		{
@@ -91,22 +86,13 @@ void PPU::Tick()
 			{
 			case 1:
 			{
-				if (bus.Read(LY) == bus.Read(WY))
-				{
-					wy = true;
-				}
-				bool window = wy && (bus.Read(LCDC) & 0x20) >> 5 && wy && (bus.Read(WX) - x * 8) < 8 && ((bus.Read(WX) - x * 8) >= 0);
 				fetchAddr = 0x9800;
  				if ((window && ((bus.Read(LCDC) & 0x40) >> 6)) || (!window && ((bus.Read(LCDC) & 0x08) >> 3)))
 				{
 					  fetchAddr = 0x9C00;
 				}
-				fetcherX = !window ? bus.Read(SCX) / 8 + x : (x * 8 - (bus.Read(WX) - 7)) / 8;
-				fetcherX &= 0x1F;
-  				fetcherY = !window ? bus.Read(SCY) + bus.Read(LY) : bus.Read(LY) - (bus.Read(WY) - 7);
-				fetcherY &= 0xFF;
-				//fetcherX = x + bus.Read(SCX)/8; 
-				//fetcherY = bus.Read(LY) + bus.Read(SCY);
+				fetcherX = !window ? bus.Read(SCX) + x : (x - (bus.Read(WX) - 7));
+				fetcherY = !window ? bus.Read(SCY) + bus.Read(LY) : windowLineCounter;
 				sleep = 2;
 				fetchStep++;
 			}
@@ -114,7 +100,7 @@ void PPU::Tick()
 			case 2:
 			{
 				bool lcdc4 = ((bus.Read(LCDC) & 0x10)) >> 4;
-				uint8_t tileIndex = bus.Read(fetchAddr + ((fetcherY / 8) * 32 + fetcherX));
+				uint8_t tileIndex = bus.Read(fetchAddr + ((fetcherY / 8) * 32 + fetcherX / 8));
 				uint16_t tileAddr = lcdc4 ? 0x8000 + tileIndex * 16 + (fetcherY % 8) * 2
 					: 0x9000 + char(tileIndex) * 16 + (fetcherY % 8) * 2;
 				fetchLow = bus.Read(tileAddr);
@@ -124,77 +110,66 @@ void PPU::Tick()
 			}
 			break;
 			case 3:
-				sleep = 2;
-				fetchStep++;
-				break;
-			case 4:
 			{
-				for (int i = 7; i >= 0; i--)
+				if (fifo.size() <= 8)
 				{
-					Pixel px;
-					px.color = ((fetchLow >> i) & 0x01) | ((fetchHigh >> i) << 1 & 0x02);
-					bgFIFO[7 - i] = px;
-				}
-				sleep = 2;
-				fetchStep++;
-			}
-			break;
-			case 5:
-			{
-				auto y = bus.Read(LY);
-				auto palette = bus.Read(BGP);
-				for (int i = 0; i < 8; i++)
-				{
-					uint8_t color = (palette >> (bgFIFO[i].color * 2)) & 0x03;
-					/*switch (color)
+					for (int i = 7; i >= 0; i--)
 					{
-					case 0:
-						((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0xFF,0xFF,0xFF,0xFF };
-						break;
-					case 1:
-						((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0xAA,0xAA,0xAA,0xFF };
-						break;
-					case 2:
-						((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x55,0x55,0x55,0xFF };
-						break;
-					case 3:
-						((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x00,0x00,0x00,0xFF };
-						break;
-					}*/
-					switch (color)
-					{
-					case 0:
-						((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x0F,0xBC,0x9B,0xFF };
-						break;
-					case 1:
-						((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x0F,0xAC,0x8B,0xFF };
-						break;
-					case 2:
-						((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x30,0x62,0x30,0xFF };
-						break;
-					case 3:
-						((Color*)pBuffer)[y * 160 + x * 8 + i] = { 0x0F,0x38,0x0F,0xFF };
-						break;
+						Pixel px;
+						px.color = ((fetchLow >> i) & 0x01) | ((fetchHigh >> i) << 1 & 0x02);
+						fifo.push_back(px);
 					}
-				}
-				fetchStep = 1;
-				x++;
-				if (x > 20)
-				{
-					SetMode(0);  
-					x = 0;
+					fetchStep = 1;
 				}
 			}
 			break;
+			}
+			if (fifo.size() > 8)
+			{
+				auto palette = bus.Read(BGP);
+				int index = bus.Read(LY) * 160 + x;
+				uint8_t color = (palette >> (fifo.front().color * 2)) & 0x03;
+				fifo.erase(fifo.begin());
+				if ((bus.Read(LCDC) & 0x80) == 0 || (bus.Read(LCDC) & 0x01) == 0)
+				{
+					color = 0;
+				}
+				switch (color)
+				{
+				case 0:
+					((Color*)pBuffer)[index] = { 0x0F,0xBC,0x9B,0xFF };
+					break;
+				case 1:
+					((Color*)pBuffer)[index] = { 0x0F,0xAC,0x8B,0xFF };
+					break;
+				case 2:
+					((Color*)pBuffer)[index] = { 0x30,0x62,0x30,0xFF };
+					break;
+				case 3:
+					((Color*)pBuffer)[index] = { 0x0F,0x38,0x0F,0xFF };
+					break;
+				}
+				x++;
+				bool winOld = window;
+				window = wy && (bus.Read(LCDC) & 0x20) != 0 && x >= (bus.Read(WX) - 7);
+				if (window && !winOld)
+				{
+					windowLineCounter++;
+					fifo.clear();
+					fetchStep = 1;
+				}
+			}
+			if (x >= 160)
+			{
+				SetMode(0);
+				fifo.clear();
+				x = 0;
 			}
 		}
 		break;
 		}
 	}
-	else
-	{
-		sleep--;
-	}
+	sleep--;
 }
  
 void PPU::SetMode(int mode)
@@ -202,11 +177,17 @@ void PPU::SetMode(int mode)
 	if (mode != this->mode)
 	{
 		this->mode = mode;
-		bus.PPUWrite(STAT, mode | (bus.Read(STAT) & 0xFC));
+		bus.PPUWrite(STAT, (mode & 0x03) | (bus.Read(STAT) & 0xFC));
 		if (mode == 1)
 		{
 			bus.PPUWrite(IF, bus.Read(IF) | 0x01);
 			wy = false;
+			windowLineCounter = -1;
+		}
+		if (mode == 2)
+		{
+			wy = wy || (bus.Read(LY) == bus.Read(WY));
+			window = false;
 		}
 		UpdateStat();
 	}
@@ -227,6 +208,6 @@ void PPU::UpdateStat()
 	statLine = ((stat & 0x40) != 0 && (stat & 0x04) != 0) || (((stat & 0x20) != 0) && (mode == 2)) || (((stat & 0x10) != 0) && (mode == 1)) || (((stat & 0x08) != 0) && (mode == 0));
 	if (lineOld == false && statLine == true)
 	{
-		bus.PPUWrite(IE, bus.Read(IE) | 0x02);
+		bus.PPUWrite(IF, bus.Read(IF) | 0x02);
 	}
 }

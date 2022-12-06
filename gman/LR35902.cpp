@@ -37,13 +37,13 @@ LR35902::LR35902(Bus& bus)
 
 void LR35902::Tick()
 {
-	if (interrupt)
+	uint8_t flag = bus.Read(0xFFFF) & bus.Read(0xFF0F) & 0x1F;
+	if (flag != 0)
 	{
-		uint8_t flag = bus.Read(0xFFFF) & bus.Read(0xFF0F) & 0x1F;
-		if(flag != 0)
+		halt = false;
+		stop = false;
+		if (interrupt)
 		{
-			halt = false;
-			stop = false;
 			interrupt = false;
 			uint16_t addr;
 			uint8_t mask;
@@ -63,7 +63,7 @@ void LR35902::Tick()
 			else if ((flag & 0x04) != 0)
 			{
 				addr = 0x0050;
-				mask = 0x04; 
+				mask = 0x04;
 			}
 			else if ((flag & 0x08) != 0)
 			{
@@ -84,7 +84,7 @@ void LR35902::Tick()
 			bus.Write(SP, PC & 0x00FF);
 			bus.Write(0xFF0F, bus.Read(0xFF0F) & ~mask);
 			PC = addr;
-			sleep = 20;
+			sleep += 20;
 		}
 	}
 	if (!stop && !halt)
@@ -289,6 +289,7 @@ void LR35902::Tick()
 				}
 				SetFlag(FLAG_Z, r == 0 ? FLAG_SET : FLAG_CLEAR);
 				SetFlag(FLAG_H, FLAG_CLEAR);
+				sleep = 4;
 			}
 				break;
 			case 0x28:// JR Z,r8
@@ -385,6 +386,7 @@ void LR35902::Tick()
 				SetFlag(FLAG_C, FLAG_SET);
 				SetFlag(FLAG_N, FLAG_CLEAR);
 				SetFlag(FLAG_H, FLAG_CLEAR);
+				sleep = 4;
 				break;
 			case 0x38:// JR C,r8
 				if (GetFlag(FLAG_C) == 0)
@@ -1698,7 +1700,7 @@ void LR35902::PrefixCB(uint8_t code)
 		break;
 	case 0x06: // (HL)
 		reg = 0xFF;
-		sleep = 16;
+		sleep = code > 0x40 && code < 0x80 ? 12 : 16;
 		break;
 	case 0x07:
 		reg = REGISTER_A;

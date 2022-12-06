@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Bus.h"
+#include <vector>
 
 class PPU
 {
@@ -40,7 +41,7 @@ private:
 	int mode = 2;
 	int sleep = 0;
 	int oamIndex = 0;
-	int sprIndex = 0;   
+	int sprIndex = 0;
 	int fetchStep = 1;
 	bool wy = false;
 	uint8_t x = 0;
@@ -50,7 +51,8 @@ private:
 	uint8_t fetchLow;
 	uint8_t fetchHigh;
 	Sprite sprites[10];
-	Pixel bgFIFO[16];
-	Pixel sprFIFO[16];
+	std::vector<Pixel> fifo{16};
 	bool statLine = false;
+	uint8_t windowLineCounter = 0;
+	bool window = false;
 };

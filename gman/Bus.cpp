@@ -19,14 +19,54 @@ uint8_t Bus::Read(uint16_t addr)
 	{
 		return boot[addr];
 	}
-	if (addr >= 0 && addr <= 0xFFFF)
+	if (addr < 0x4000)
 	{
-		return memBuf[addr];
+
 	}
-	else
+	else if (addr < 0x8000)
+	{
+
+	}
+	else if (addr < 0xA000)
+	{
+
+	}
+	else if (addr < 0xC000)
 	{
 		return 0xFF;
 	}
+	else if (addr < 0xD000)
+	{
+
+	}
+	else if (addr < 0xE000)
+	{
+
+	}
+	else if (addr < 0xFE00)
+	{
+		return memBuf[addr - 0x2000];
+	}
+	else if (addr < 0xFEA0)
+	{
+
+	}
+	else if (addr < 0xFF00)
+	{
+		return 0xFF;
+	}
+	if (addr == 0xFF00)
+	{
+		if ((memBuf[0xFF00] & 0x20) == 0)
+		{
+			memBuf[0xFF00] = 0x10 | (*keys & 0x0F);
+		}
+		else
+		{
+			memBuf[0xFF00] = 0x20 | ((*keys >> 4) & 0x0F);
+		}
+	}
+	return memBuf[addr];
 }
 
 uint16_t Bus::Read16(uint16_t addr)
@@ -66,11 +106,47 @@ void Bus::Write(uint16_t addr, uint8_t val)
 	{
 		return;
 	}
+	else if (addr < 0xA000)
+	{
+		
+	}
+	else if (addr < 0xC000)
+	{
+		return;
+	}
+	else if (addr < 0xD000)
+	{
+
+	}
+	else if (addr < 0xE000)
+	{
+
+	}
+	else if (addr < 0xFE00)
+	{
+		Write(addr - 0x2000, val);
+	}
+	else if (addr < 0xFEA0)
+	{
+
+	}
+	else if (addr < 0xFF00)
+	{
+		return;
+	}
 
 	switch (addr)
 	{
 	case 0xFF00:
-		memBuf[0xFF00] = (memBuf[0xFF00] & 0x0F) | (val & 0xF0);
+		memBuf[0xFF00] = (memBuf[0xFF00] & 0x0F) | (val & 0x30) | 0xC0;
+		if ((memBuf[0xFF00] & 0x20) == 0)
+		{
+			memBuf[0xFF00] = 0x10 | (*keys & 0x0F);
+		}
+		else
+		{
+			memBuf[0xFF00] = 0x20 | ((*keys >> 4) & 0x0F);
+		}
 		break;
 	case 0xFF04:
 		memBuf[0xFF04] = 0;

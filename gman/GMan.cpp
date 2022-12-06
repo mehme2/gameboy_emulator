@@ -27,8 +27,6 @@ void GMan::DoFrame()
 
 void GMan::Tick()
 {
-	static int divCount = 0;
-	static int timCount = 0;
 	cpu.Tick();
 	ppu.Tick();
 	divCount = (divCount + 1) % 256;
@@ -103,4 +101,9 @@ void GMan::LoadBootRom(const char* path)
 	rom.close();
 	bus.BindBootRom(pBoot, size);
 	cpu.PC = 0x0000;
+}
+
+void GMan::BindKeyPtr(uint8_t* ptr)
+{
+	bus.keys = ptr;
 }

@@ -12,12 +12,75 @@ namespace Shaders
 
 #include "GMan.h"
 
+uint8_t input;
+
 LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
 	{
 	case WM_CLOSE:
 		PostQuitMessage(31);
+		break;
+	case WM_KEYDOWN:
+		if (!(lParam & 0x40000000))
+		{
+			switch (wParam)
+			{
+			case VK_RIGHT:
+				input |= 0x01;
+				break;
+			case VK_LEFT:
+				input |= 0x02;
+				break;
+			case VK_UP:
+				input |= 0x04;
+				break;
+			case VK_DOWN:
+				input |= 0x08;
+				break;
+			case 'Z':
+				input |= 0x10;
+				break;
+			case 'X':
+				input |= 0x20;
+				break;
+			case VK_BACK:
+				input |= 0x40;
+				break;
+			case VK_RETURN:
+				input |= 0x80;
+				break;
+			}
+		}
+		break;
+	case WM_KEYUP:
+		switch (wParam)
+		{
+		case VK_RIGHT:
+			input &= ~0x01;
+			break;
+		case VK_LEFT:
+			input &= ~0x02;
+			break;
+		case VK_UP:
+			input &= ~0x04;
+			break;
+		case VK_DOWN:
+			input &= ~0x08;
+			break;
+		case 'Z':
+			input &= ~0x10;
+			break;
+		case 'X':
+			input &= ~0x20;
+			break;
+		case VK_BACK:
+			input &= ~0x40;
+			break;
+		case VK_RETURN:
+			input &= ~0x80;
+			break;
+		}
 		break;
 	}
 	return DefWindowProc(hWnd, msg, wParam, lParam);
@@ -360,6 +423,7 @@ int WINAPI WinMain(
 		}
 	}
 	gman.SetPixelBuffer(pBuffer);
+	gman.BindKeyPtr(&input);
 
 	MSG msg;
 	while (1)
@@ -390,6 +454,6 @@ int WINAPI WinMain(
 		pContext->Unmap(pTex.Get(), 0u);
 		pContext->ClearRenderTargetView(pTargetView.Get(), background);
 		pContext->DrawIndexed(6, 0, 0);
-		pSwapChain->Present(0, 0);
+		pSwapChain->Present(1, 0);
  	}
 }
