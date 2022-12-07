@@ -140,16 +140,16 @@ void PPU::Tick()
 						Pixel px;
 						px.obj = true;
 						px.bgPriority = (sprites[sprIndex].flags & 0x80) >> 7;
-						uint8_t palette =true ? bus.Read(OBP0 + ((sprites[sprIndex].flags & 0x10) >> 4)) : bus.Read(BGP);
+						uint8_t palette = bus.Read(OBP0 + ((sprites[sprIndex].flags & 0x10) >> 4));
 						uint8_t color = ((fetchLow >> i) & 0x01) | ((fetchHigh >> i) << 1 & 0x02);
 						px.color = ((palette) >> (color * 2)) & 0x03;
 						uint8_t idx = (sprites[sprIndex].flags & 0x20) == 0 ? 7 - i : i;
 						if (!fifo[idx].obj && color != 0)
 						{
-							 if (px.bgPriority != 0)
-							 {
-							 	px.color = fifo[idx].color;
-							 }
+							if (px.bgPriority != 0 && fifo[idx].color != 0)
+							{
+								px.color = fifo[idx].color;
+							}
 							fifo[idx] = px;
 						}
 					}
