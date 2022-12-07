@@ -18,7 +18,9 @@
 PPU::PPU(Bus& bus)
 	:
 	bus(bus)
-{}
+{
+	fifo.clear();
+}
 
 
 void PPU::BindPixelBuffer(void* buf)
@@ -95,6 +97,10 @@ void PPU::Tick()
 				fetcherX += fifo.size();
 				fetcherY = !window ? bus.Read(SCY) + bus.Read(LY) : windowLineCounter;
 				sleep = 2;
+				if (x == 0)
+				{
+					shift = window ? (bus.Read(WX) - 7) % 8 : bus.Read(SCX) % 8;
+				}
 				fetchStep++;
 			}
 			break;
@@ -107,7 +113,7 @@ void PPU::Tick()
 					uint8_t offset = ((bus.Read(LY) - (sprites[sprIndex].y - 16)) % (size)) * 2;
 					if ((sprites[sprIndex].flags & 0x40) != 0)
 					{
-						offset = size - offset;
+						offset = 2*size - offset-2;
 					}
 					uint8_t idx = size == 8 ? sprites[sprIndex].index : sprites[sprIndex].index & 0xFE;
 					tileAddr = 0x8000 + idx * 16 + offset;
@@ -129,97 +135,109 @@ void PPU::Tick()
 			{
 				if (sprIndex != -1 && fifo.size() >= 8)
 				{
-					for (int i = 7; i >= 0; i--)
+					for (int i = 7; i >= shift; i--)
 					{
 						Pixel px;
+						px.obj = true;
 						px.bgPriority = (sprites[sprIndex].flags & 0x80) >> 7;
-						uint8_t palette = (sprites[sprIndex].flags & 0x10) >> 4;
+						uint8_t palette =true ? bus.Read(OBP0 + ((sprites[sprIndex].flags & 0x10) >> 4)) : bus.Read(BGP);
 						uint8_t color = ((fetchLow >> i) & 0x01) | ((fetchHigh >> i) << 1 & 0x02);
-						px.color = (bus.Read(OBP0 + palette) >> (color * 2)) & 0x03;
-						uint8_t idx = (sprites[sprIndex].flags & 0x20) == 0 ? i : 7 - i;
-						if (fifo[idx].bgPriority == 0 && color != 0)
+						px.color = ((palette) >> (color * 2)) & 0x03;
+						uint8_t idx = (sprites[sprIndex].flags & 0x20) == 0 ? 7 - i : i;
+						if (!fifo[idx].obj && color != 0)
 						{
-							fifo[i] = px;
+							 if (px.bgPriority != 0)
+							 {
+							 	px.color = fifo[idx].color;
+							 }
+							fifo[idx] = px;
 						}
 					}
 					sprites.erase(sprites.begin() + sprIndex);
 					sprIndex = -1;
 					stopFifo = false;
 					fetchStep = 1;
+					shift = 0;
 				}
 				else if (fifo.size() <= 8)
 				{
-					for (int i = 7; i >= 0; i--)
+					for (int i = 7; i >= shift; i--)
 					{
 						Pixel px;
 						px.bgPriority = 0;
-						px.color = ((fetchLow >> i) & 0x01) | ((fetchHigh >> i) << 1 & 0x02);
+						uint8_t palette = bus.Read(BGP);
+						uint8_t color = ((fetchLow >> i) & 0x01) | ((fetchHigh >> i) << 1 & 0x02);
+						px.color = (palette) >> (color * 2) & 0x03;
 						fifo.push_back(px);
 					}
 					fetchStep = 1;
+					shift = 0;
 				}
 			}
 			break;
 			}
-			if (fifo.size() > 8 && !stopFifo)
-			{
-				auto palette = bus.Read(BGP);
-				int index = bus.Read(LY) * 160 + x;
-				uint8_t color = (palette >> (fifo.front().color * 2)) & 0x03;
-				fifo.erase(fifo.begin());
-				if ((bus.Read(LCDC) & 0x80) == 0 || (bus.Read(LCDC) & 0x01) == 0)
-				{
-					color = 0;
-				}
-				switch (color)
-				{
-				case 0:
-					((Color*)pBuffer)[index] = { 0x0F,0xBC,0x9B,0xFF };
-					break;
-				case 1:
-					((Color*)pBuffer)[index] = { 0x0F,0xAC,0x8B,0xFF };
-					break;
-				case 2:
-					((Color*)pBuffer)[index] = { 0x30,0x62,0x30,0xFF };
-					break;
-				case 3:
-					((Color*)pBuffer)[index] = { 0x0F,0x38,0x0F,0xFF };
-					break;
-				}
-				x++;
-				bool winOld = window;
-				window = wy && (bus.Read(LCDC) & 0x20) != 0 && x >= (bus.Read(WX) - 7);
-				if (window && !winOld)
-				{
-					windowLineCounter++;
-					fifo.clear();
-					fetchStep = 1;
-				}
-				if ((bus.Read(LCDC) & 0x02) != 0)
-				{
-					for (int i = 0;i < sprites.size();i++)
-					{
-						if (sprites[i].x - 8 == x)
-						{
-							sprIndex = i;
-							fetchStep = 1;
-							stopFifo = true;
-						}
-						break;
-					}
-				}
-			}
-			if (x >= 160)
-			{
-				SetMode(0);
-				fifo.clear();
-				x = 0;
-				fetchStep = 1;
-				sprIndex = -1;
-				stopFifo = false;
-			}
 		}
 		break;
+		}
+	} 
+	if (mode == 3)
+	{
+		if (fifo.size() > 8 && !stopFifo)
+		{
+			auto palette = bus.Read(BGP);
+			int index = bus.Read(LY) * 160 + x;
+			uint8_t color = fifo.front().color;
+			fifo.erase(fifo.begin());
+			if ((bus.Read(LCDC) & 0x80) == 0 || (bus.Read(LCDC) & 0x01) == 0)
+			{
+				color = 0;
+			}
+			switch (color)
+			{
+			case 0:
+				((Color*)pBuffer)[index] = { 0x0F,0xBC,0x9B,0xFF };
+				break;
+			case 1:
+				((Color*)pBuffer)[index] = { 0x0F,0xAC,0x8B,0xFF };
+				break;
+			case 2:
+				((Color*)pBuffer)[index] = { 0x30,0x62,0x30,0xFF };
+				break;
+			case 3:
+				((Color*)pBuffer)[index] = { 0x0F,0x38,0x0F,0xFF };
+				break;
+			}
+			x++;
+			bool winOld = window;
+			window = wy && (bus.Read(LCDC) & 0x20) != 0 && x >= (bus.Read(WX) - 7);
+			if (window && !winOld)
+			{
+				windowLineCounter++;
+				fifo.clear();
+				fetchStep = 1;
+			}
+			if ((bus.Read(LCDC) & 0x02) != 0)
+			{
+				for (int i = 0;i < sprites.size();i++)
+				{
+					if (sprites[i].x - 8 == x)
+					{
+						sprIndex = i;
+						fetchStep = 1;
+						stopFifo = true;
+					}
+					break;
+				}
+			}
+		}
+		if (x >= 160)
+		{
+			SetMode(0);
+			fifo.clear();
+			x = 0;
+			fetchStep = 1;
+			sprIndex = -1;
+			stopFifo = false;
 		}
 	}
 	sleep--;
@@ -244,6 +262,7 @@ void PPU::SetMode(int mode)
 			sprites.clear();
 		}
 		UpdateStat();
+		sleep = 0;
 	}
 }
 

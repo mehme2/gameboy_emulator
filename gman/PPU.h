@@ -18,6 +18,7 @@ class PPU
 		uint8_t color;
 		uint8_t palette;
 		uint8_t bgPriority;
+		bool obj = false;
 	};
 	struct Color
 	{
@@ -56,4 +57,5 @@ private:
 	bool statLine = false;
 	uint8_t windowLineCounter = 0;
 	bool window = false;
+	uint8_t shift = 0;
 };
