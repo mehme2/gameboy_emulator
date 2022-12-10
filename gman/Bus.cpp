@@ -62,11 +62,11 @@ uint8_t Bus::Read(uint16_t addr)
 	{
 		if ((memBuf[0xFF00] & 0x20) == 0)
 		{
-			memBuf[0xFF00] = (memBuf[0xFF00] & 0x03) | ((*keys >> 4) & 0x0F);
+			memBuf[0xFF00] = 0xC0 | (memBuf[0xFF00] & 0x30) | ((*keys >> 4) & 0x0F);
 		}
 		else
 		{
-			memBuf[0xFF00] = (memBuf[0xFF00] & 0x03) | (*keys & 0x0F);
+			memBuf[0xFF00] = 0xC0 | (memBuf[0xFF00] & 0x30) | (*keys & 0x0F);
 		}
 	}
 	return memBuf[addr];
