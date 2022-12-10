@@ -19,6 +19,7 @@ PPU::PPU(Bus& bus)
 	:
 	bus(bus)
 {
+	fifo.clear();
 	vram = new uint8_t[0x2000];
 	oam = new uint8_t[0x100];
 }
@@ -140,7 +141,7 @@ void PPU::Tick()
 			{
 				if (sprIndex != -1 && fifo.size() >= 8)
 				{
-					for (int i = 7; i >= shift; i--)
+					for (int i = 7; i >= 0; i--)
 					{
 						Pixel px;
 						px.obj = true;
@@ -162,11 +163,10 @@ void PPU::Tick()
 					sprIndex = -1;
 					stopFifo = false;
 					fetchStep = 1;
-					shift = 0;
 				}
 				else if (fifo.size() <= 8)
 				{
-					for (int i = 7; i >= shift; i--)
+					for (int i = 7; i >= 0; i--)
 					{
 						Pixel px;
 						px.bgPriority = 0;
@@ -176,7 +176,6 @@ void PPU::Tick()
 						fifo.push_back(px);
 					}
 					fetchStep = 1;
-					shift = 0;
 				}
 			}
 			break;
@@ -189,37 +188,10 @@ void PPU::Tick()
 	{
 		if (fifo.size() > 8 && !stopFifo)
 		{
-			auto palette = bus.PPURead(BGP);
-			int index = bus.PPURead(LY) * 160 + x;
-			uint8_t color = fifo.front().color;
-			fifo.erase(fifo.begin());
-			if (lcdOff || (bus.PPURead(LCDC) & 0x01) == 0)
+			while (shift > 0)
 			{
-				color = 0;
-			}
-			switch (color)
-			{
-			case 0:
-				((Color*)pBuffer)[index] = { 0x0F,0xBC,0x9B,0xFF };
-				break;
-			case 1:
-				((Color*)pBuffer)[index] = { 0x0F,0xAC,0x8B,0xFF };
-				break;
-			case 2:
-				((Color*)pBuffer)[index] = { 0x30,0x62,0x30,0xFF };
-				break;
-			case 3:
-				((Color*)pBuffer)[index] = { 0x0F,0x38,0x0F,0xFF };
-				break;
-			}
-			x++;
-			bool winOld = window;
-			window = wyc && (bus.PPURead(LCDC) & 0x20) != 0 && x >= (bus.PPURead(WX) - 7);
-			if (window && !winOld)
-			{
-				windowLineCounter++;
-				fifo.clear();
-				fetchStep = 1;
+				shift--;
+				fifo.erase(fifo.begin());
 			}
 			if ((bus.PPURead(LCDC) & 0x02) != 0)
 			{
@@ -232,6 +204,41 @@ void PPU::Tick()
 						stopFifo = true;
 						break;
 					}
+				}
+			}
+			if (sprIndex == -1)
+			{
+				auto palette = bus.PPURead(BGP);
+				int index = bus.PPURead(LY) * 160 + x;
+				uint8_t color = fifo.front().color;
+				fifo.erase(fifo.begin());
+				if (lcdOff || (bus.PPURead(LCDC) & 0x01) == 0)
+				{
+					color = 0;
+				}
+				switch (color)
+				{
+				case 0:
+					((Color*)pBuffer)[index] = { 0x0F,0xBC,0x9B,0xFF };
+					break;
+				case 1:
+					((Color*)pBuffer)[index] = { 0x0F,0xAC,0x8B,0xFF };
+					break;
+				case 2:
+					((Color*)pBuffer)[index] = { 0x30,0x62,0x30,0xFF };
+					break;
+				case 3:
+					((Color*)pBuffer)[index] = { 0x0F,0x38,0x0F,0xFF };
+					break;
+				}
+				x++;
+				bool winOld = window;
+				window = wyc && (bus.PPURead(LCDC) & 0x20) != 0 && x >= (bus.PPURead(WX) - 7);
+				if (window && !winOld)
+				{
+					windowLineCounter++;
+					fifo.clear();
+					fetchStep = 1;
 				}
 			}
 		}

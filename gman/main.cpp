@@ -12,7 +12,7 @@ namespace Shaders
 
 #include "GMan.h"
 
-uint8_t input;
+uint8_t input=0xFF;
 
 LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
