@@ -752,17 +752,12 @@ void LR35902::Tick()
 			{
 				auto old = GetRegister(REGISTER_A);
 				auto add = bus.Read(GetRegister16(REGISTER_HL));
-				auto& res = GetRegister(REGISTER_A) += add;
-				auto oldFlag = GetFlag(FLAG_C);
-				res += oldFlag & 0x01;
+				auto c = GetFlag(FLAG_C) & 0x01;
+				auto& res = GetRegister(REGISTER_A);
+				res += c + add;
 				SetFlag(FLAG_Z, res == 0 ? FLAG_SET : FLAG_CLEAR);
-				SetFlag(FLAG_H, (old & 0x0F) >= (res & 0x0F) ? FLAG_SET : FLAG_CLEAR);
-				SetFlag(FLAG_C, old >= res ? FLAG_SET : FLAG_CLEAR);
-				if (add == 0 && oldFlag == 0)
-				{
-					SetFlag(FLAG_C, FLAG_CLEAR);
-					SetFlag(FLAG_H, FLAG_CLEAR);
-				}
+				SetFlag(FLAG_H, (old & 0x0F) + (add & 0x0F) + c > 0x0F ? FLAG_SET : FLAG_CLEAR);
+				SetFlag(FLAG_C, old + add + c > 0xFF ? FLAG_SET : FLAG_CLEAR);
 				SetFlag(FLAG_N, FLAG_CLEAR);
 				sleep = 8;
 			}
@@ -837,11 +832,13 @@ void LR35902::Tick()
 			case 0x9E:// SBC A,(HL)
 			{
 				auto old = GetRegister(REGISTER_A);
-				auto& res = GetRegister(REGISTER_A) -= bus.Read(GetRegister16(REGISTER_HL));
-				res -= GetFlag(FLAG_C) & 0x01;
+				auto sub = bus.Read(GetRegister16(REGISTER_HL));
+				auto c = GetFlag(FLAG_C) & 0x01;
+				auto& res = GetRegister(REGISTER_A);
+				res = old - (c + sub);
 				SetFlag(FLAG_Z, res == 0 ? FLAG_SET : FLAG_CLEAR);
-				SetFlag(FLAG_H, (old & 0x0F) <= (res & 0x0F) ? FLAG_SET : FLAG_CLEAR); 
-				SetFlag(FLAG_C, old <= res ? FLAG_SET : FLAG_CLEAR);
+				SetFlag(FLAG_H, (old & 0x0F) < (c + (sub & 0x0F)) ? FLAG_SET : FLAG_CLEAR);
+				SetFlag(FLAG_C, old < (sub + c) ? FLAG_SET : FLAG_CLEAR);
 				SetFlag(FLAG_N, FLAG_SET);
 				sleep = 8;
 			}
@@ -1126,11 +1123,13 @@ void LR35902::Tick()
 			case 0xCE:// ADC A,d8
 			{
 				auto old = GetRegister(REGISTER_A);
-				auto&  res = GetRegister(REGISTER_A) += Fetch();
-				res += GetFlag(FLAG_C) & 0x01;
+				auto add = Fetch();
+				auto c = GetFlag(FLAG_C) & 0x01;
+				auto&  res = GetRegister(REGISTER_A);
+				res += c + add;
 				SetFlag(FLAG_Z, res == 0 ? FLAG_SET : FLAG_CLEAR);
-				SetFlag(FLAG_H, (old & 0x0F) >= (res & 0x0F) ? FLAG_SET : FLAG_CLEAR);
-				SetFlag(FLAG_C, old >= res ? FLAG_SET : FLAG_CLEAR);
+				SetFlag(FLAG_H, (old & 0x0F) + (add & 0x0F) + c > 0x0F ? FLAG_SET : FLAG_CLEAR);
+				SetFlag(FLAG_C, old + add + c > 0xFF ? FLAG_SET : FLAG_CLEAR);
 				SetFlag(FLAG_N, FLAG_CLEAR);
 				sleep = 8;
 			}
@@ -1255,11 +1254,13 @@ void LR35902::Tick()
 			case 0xDE:// SBC A,d8
 			{
 				auto old = GetRegister(REGISTER_A);
-				auto& res = GetRegister(REGISTER_A) -= Fetch();
-				res -= GetFlag(FLAG_C) & 0x01;
+				auto sub = Fetch();
+				auto c = GetFlag(FLAG_C) & 0x01;
+				auto& res = GetRegister(REGISTER_A);
+				res = old - (c + sub);
 				SetFlag(FLAG_Z, res == 0 ? FLAG_SET : FLAG_CLEAR);
-				SetFlag(FLAG_H, (old & 0x0F) <= (res & 0x0F) ? FLAG_SET : FLAG_CLEAR);
-				SetFlag(FLAG_C, old <= res ? FLAG_SET : FLAG_CLEAR);
+				SetFlag(FLAG_H, (old & 0x0F) < (c + (sub & 0x0F)) ? FLAG_SET : FLAG_CLEAR);
+				SetFlag(FLAG_C, old < (sub + c) ? FLAG_SET : FLAG_CLEAR);
 				SetFlag(FLAG_N, FLAG_SET);
 				sleep = 8;
 			}
@@ -1309,8 +1310,8 @@ void LR35902::Tick()
 					auto old = SP;
 					auto res = SP += int8_t(Fetch());
 					SetFlag(FLAG_Z, FLAG_CLEAR);
-					SetFlag(FLAG_H, (old & 0x0FFF) > (res & 0x0FFF) ? FLAG_SET : FLAG_CLEAR);
-					SetFlag(FLAG_C, old > res ? FLAG_SET : FLAG_CLEAR);
+					SetFlag(FLAG_H, (old & 0x000F) > (res & 0x000F) ? FLAG_SET : FLAG_CLEAR);
+					SetFlag(FLAG_C, (old & 0x00FF) > (res & 0x00FF) ? FLAG_SET : FLAG_CLEAR);
 					SetFlag(FLAG_N, FLAG_CLEAR);
 					sleep = 16;
 				}
@@ -1384,11 +1385,12 @@ void LR35902::Tick()
 			case 0xF8:// LD HL,SP+r8
 			{
 				auto old = SP;
-  				GetRegister16(REGISTER_HL) = SP + int8_t(Fetch());
+				auto res = old + int8_t(Fetch());
 				SetFlag(FLAG_Z, FLAG_CLEAR);
-				SetFlag(FLAG_H, (GetRegister16(REGISTER_HL) & 0x0FFF) < (old & 0x0FFF) ? FLAG_SET : FLAG_CLEAR);
+				SetFlag(FLAG_H, (old & 0x000F) > (res & 0x000F) ? FLAG_SET : FLAG_CLEAR);
+				SetFlag(FLAG_C, (old & 0x00FF) > (res & 0x00FF) ? FLAG_SET : FLAG_CLEAR);
 				SetFlag(FLAG_N, FLAG_CLEAR);
-				SetFlag(FLAG_C, GetRegister16(REGISTER_HL) < old ? FLAG_SET : FLAG_CLEAR);
+				GetRegister16(REGISTER_HL) = res;
 				sleep = 12;
 			}
 				break;
@@ -1596,11 +1598,13 @@ void LR35902::AddRegister(uint8_t lhs, uint8_t rhs)
 void LR35902::AddRegisterCarry(uint8_t lhs, uint8_t rhs)
 {
 	auto old = GetRegister(lhs);
-	auto& res = GetRegister(lhs) += GetRegister(rhs);
-	res += GetFlag(FLAG_C) & 0x01;
+	auto add = GetRegister(rhs);
+	auto c = GetFlag(FLAG_C) & 0x01;
+	auto& res = GetRegister(lhs);
+	res += c + add;
 	SetFlag(FLAG_Z, res == 0 ? FLAG_SET : FLAG_CLEAR);
-	SetFlag(FLAG_H, (old & 0x0F) >= (res & 0x0F) ? FLAG_SET : FLAG_CLEAR);
-	SetFlag(FLAG_C, old >= res ? FLAG_SET : FLAG_CLEAR);
+	SetFlag(FLAG_H, (old & 0x0F) + (add & 0x0F) + c > 0x0F ? FLAG_SET : FLAG_CLEAR);
+	SetFlag(FLAG_C, old + add + c > 0xFF ? FLAG_SET : FLAG_CLEAR);
 	SetFlag(FLAG_N, FLAG_CLEAR);
 }    
 
@@ -1617,11 +1621,13 @@ void LR35902::SubRegister(uint8_t lhs, uint8_t rhs)
 void LR35902::SubRegisterCarry(uint8_t lhs, uint8_t rhs)
 {
 	auto old = GetRegister(lhs);
-	auto& res = GetRegister(lhs) -= GetRegister(rhs);
-	res -= GetFlag(FLAG_C) & 0x01;
+	auto sub = GetRegister(rhs);
+	auto c = GetFlag(FLAG_C) & 0x01;
+	auto& res = GetRegister(lhs);
+	res = old - (c + sub);
 	SetFlag(FLAG_Z, res == 0 ? FLAG_SET : FLAG_CLEAR);
-	SetFlag(FLAG_H, (old & 0x0F) <= (res & 0x0F) ? FLAG_SET : FLAG_CLEAR);
-	SetFlag(FLAG_C, old <= res ? FLAG_SET : FLAG_CLEAR);
+	SetFlag(FLAG_H, (old & 0x0F) < (c + (sub & 0x0F)) ? FLAG_SET : FLAG_CLEAR);
+	SetFlag(FLAG_C, old < (sub + c) ? FLAG_SET : FLAG_CLEAR);
 	SetFlag(FLAG_N, FLAG_SET);
 }
 
