@@ -31,6 +31,9 @@ public:
 	PPU(Bus& bus);   
 	void BindPixelBuffer(void* buf);
 	void Tick();
+public:
+	uint8_t Read(uint16_t addr);
+	void Write(uint16_t addr, uint8_t val);
 private:
 	void SetMode(int mode); 
 	void UpdateStat();
@@ -45,7 +48,7 @@ private:
 	int fetchStep = 1;
 	int sprIndex = -1;
 	bool lcdOff = false;
-	bool wy = false;
+	bool wyc = false;
 	bool stopFifo = false;
 	uint8_t x = 0;
 	uint8_t fetcherX = 0;
@@ -59,4 +62,18 @@ private:
 	uint8_t windowLineCounter = 0;
 	bool window = false;
 	uint8_t shift = 0;
+private:
+	uint8_t* vram = nullptr;
+	uint8_t* oam = nullptr;
+	uint8_t lcdc;
+	uint8_t stat = 0x81;
+	uint8_t scy;
+	uint8_t scx;
+	uint8_t ly = 0;
+	uint8_t lyc;
+	uint8_t wy;
+	uint8_t wx;
+	uint8_t bgp;
+	uint8_t obp0;
+	uint8_t obp1;
 };

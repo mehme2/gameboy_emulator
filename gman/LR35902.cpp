@@ -351,7 +351,7 @@ void LR35902::Tick()
 				sleep = 12;
 				break;
 			case 0x32:// LD (HL-),A
-				bus.Write(GetRegister16(REGISTER_HL)--  , GetRegister(REGISTER_A));
+				bus.Write(GetRegister16(REGISTER_HL)--, GetRegister(REGISTER_A));
 				sleep = 8;
 				break;
 			case 0x33:// INC SP

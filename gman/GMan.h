@@ -22,6 +22,6 @@ private:
 	void* ptr = nullptr;
 	uint8_t* pRom = nullptr;
 	uint8_t* pBoot = nullptr;
-	int divCount = 0;
+	int divCount = 0xCC;
 	int timCount = 0;
 };

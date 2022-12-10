@@ -4,8 +4,8 @@ Bus::Bus()
 {
 	memBuf = new uint8_t[0x10000];
 	memset(memBuf, 0, 0x10000);
-	//memBuf[0x9000+4] = 0xFF;
 	memBuf[0xFF41] = 0x81;
+	memBuf[0xFF04] = 0xAB;
 }
 
 Bus::~Bus()
@@ -29,7 +29,10 @@ uint8_t Bus::Read(uint16_t addr)
 	}
 	else if (addr < 0xA000)
 	{
-
+		if (vramLock && (memBuf[0xFF40] & 0x80) != 0)
+		{
+			return 0xFF;
+		}
 	}
 	else if (addr < 0xC000)
 	{
@@ -59,14 +62,23 @@ uint8_t Bus::Read(uint16_t addr)
 	{
 		if ((memBuf[0xFF00] & 0x20) == 0)
 		{
-			memBuf[0xFF00] = 0x10 | (*keys & 0x0F);
+			memBuf[0xFF00] = (memBuf[0xFF00] & 0x03) | ((*keys >> 4) & 0x0F);
 		}
 		else
 		{
-			memBuf[0xFF00] = 0x20 | ((*keys >> 4) & 0x0F);
+			memBuf[0xFF00] = (memBuf[0xFF00] & 0x03) | (*keys & 0x0F);
 		}
 	}
 	return memBuf[addr];
+}
+
+uint8_t Bus::PPURead(uint16_t addr)
+{
+	if ((addr >= 0x8000 && addr < 0xA000) || (addr >= 0xFE00 && addr < 0xFEA0) || (addr >= 0xFF40 && addr < 0xFF4C) || addr==0xFF0F)
+	{
+		return memBuf[addr];
+	}
+	return 0xFF;
 }
 
 uint16_t Bus::Read16(uint16_t addr)
@@ -108,7 +120,10 @@ void Bus::Write(uint16_t addr, uint8_t val)
 	}
 	else if (addr < 0xA000)
 	{
-		
+		if (vramLock && (memBuf[0xFF40] & 0x80) != 0)
+		{
+			return;
+		}
 	}
 	else if (addr < 0xC000)
 	{
@@ -141,16 +156,16 @@ void Bus::Write(uint16_t addr, uint8_t val)
 		memBuf[0xFF00] = (memBuf[0xFF00] & 0x0F) | (val & 0x30) | 0xC0;
 		if ((memBuf[0xFF00] & 0x20) == 0)
 		{
-			memBuf[0xFF00] = 0x10 | (*keys & 0x0F);
+			memBuf[0xFF00] = (memBuf[0xFF00] & 0x03) | ((*keys >> 4) & 0x0F);
 		}
 		else
 		{
-			memBuf[0xFF00] = 0x20 | ((*keys >> 4) & 0x0F);
+			memBuf[0xFF00] = (memBuf[0xFF00] & 0x03) | (*keys & 0x0F);
 		}
 		break;
 	case 0xFF04:
 		memBuf[0xFF04] = 0;
-		memBuf[0xFF05] = 0;
+		memBuf[0xFF05] = memBuf[0xFF06];
 		return;
 	case 0xFF41:
 		memBuf[0xFF41] = (memBuf[0xFF41] & 0x07) | (val & 0xF8);
@@ -158,7 +173,7 @@ void Bus::Write(uint16_t addr, uint8_t val)
 	case 0xFF44:
 		return;
 	case 0xFF46:
-		memcpy(memBuf + 0xFE00, memBuf + val * 0x100, 0x100);
+		memcpy(memBuf + 0xFE00, memBuf + val * 0x100, 0xA0);
 		break;
 	case 0xFF50:
 		bootRom = false;
@@ -191,7 +206,7 @@ void Bus::BindBootRom(uint8_t* pRom, size_t size)
 
 void Bus::PPUWrite(uint16_t addr, uint8_t val)
 {
-	if (addr >= 0x8000 && addr <= 0xFFFF)
+	if ((addr >= 0x8000 && addr < 0xA000) || (addr >= 0xFE00 && addr < 0xFEA0) || (addr >= 0xFF40 && addr < 0xFF4C) || addr == 0xFF0F)
 	{
 		memBuf[addr] = val;
 	}
