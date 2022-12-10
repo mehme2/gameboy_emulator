@@ -188,7 +188,7 @@ void PPU::Tick()
 			int index = bus.Read(LY) * 160 + x;
 			uint8_t color = fifo.front().color;
 			fifo.erase(fifo.begin());
-			if ((bus.Read(LCDC) & 0x80) == 0 || (bus.Read(LCDC) & 0x01) == 0)
+			if (lcdOff || (bus.Read(LCDC) & 0x01) == 0)
 			{
 				color = 0;
 			}
@@ -225,8 +225,8 @@ void PPU::Tick()
 						sprIndex = i;
 						fetchStep = 1;
 						stopFifo = true;
+						break;
 					}
-					break;
 				}
 			}
 		}
@@ -254,6 +254,7 @@ void PPU::SetMode(int mode)
 			bus.PPUWrite(IF, bus.Read(IF) | 0x01);
 			wy = false;
 			windowLineCounter = -1;
+			lcdOff = (bus.Read(LCDC) & 0x80) == 0;
 		}
 		if (mode == 2)
 		{

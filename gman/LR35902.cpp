@@ -351,12 +351,12 @@ void LR35902::Tick()
 				sleep = 12;
 				break;
 			case 0x32:// LD (HL-),A
-				bus.Write(GetRegister16(REGISTER_HL)--, GetRegister(REGISTER_A));
+				bus.Write(GetRegister16(REGISTER_HL)--  , GetRegister(REGISTER_A));
 				sleep = 8;
 				break;
 			case 0x33:// INC SP
 				SP++;
-				sleep = 8;
+ 				sleep = 8;
 				break;
 			case 0x34:// INC (HL)
 			{
@@ -1206,7 +1206,7 @@ void LR35902::Tick()
 			case 0xD8:// RET C
 				if (GetFlag(FLAG_C) == 0)
 				{
-					sleep = 8;
+					sleep = 8; 
 				}
 				else
 				{
@@ -1304,8 +1304,15 @@ void LR35902::Tick()
 				sleep = 16;
 				break;
 			case 0xE8:// ADD SP,r8
-				SP += char(Fetch());
-				sleep = 16;
+				{ 
+					auto old = SP;
+					auto res = SP += char(Fetch());
+					SetFlag(FLAG_Z, FLAG_CLEAR);
+					SetFlag(FLAG_H, (old & 0x0FFF) > (res & 0x0FFF) ? FLAG_SET : FLAG_CLEAR);
+					SetFlag(FLAG_C, old > res ? FLAG_SET : FLAG_CLEAR);
+					SetFlag(FLAG_N, FLAG_CLEAR);
+					sleep = 16;
+				}
 				break;
 			case 0xE9:// JP (HL)
 				PC = GetRegister16(REGISTER_HL);
@@ -1375,7 +1382,7 @@ void LR35902::Tick()
 				break;
 			case 0xF8:// LD HL,SP+r8
 			{
-				auto old = GetRegister16(REGISTER_HL);
+				auto old = SP;
   				GetRegister16(REGISTER_HL) = SP + char(Fetch());
 				SetFlag(FLAG_Z, FLAG_CLEAR);
 				SetFlag(FLAG_H, (GetRegister16(REGISTER_HL) & 0x0FFF) < (old & 0x0FFF) ? FLAG_SET : FLAG_CLEAR);
@@ -1658,6 +1665,7 @@ void LR35902::AddRegister16(uint8_t lhs, uint8_t rhs)
 {
 	auto old = GetRegister16(lhs);
 	auto res = GetRegister16(lhs) += GetRegister16(rhs);
+	SetFlag(FLAG_N, FLAG_CLEAR);
 	SetFlag(FLAG_H, (old & 0x0FFF) > (res & 0x0FFF) ? FLAG_SET : FLAG_CLEAR);
 	SetFlag(FLAG_C, old > res ? FLAG_SET : FLAG_CLEAR);
 }
@@ -1998,7 +2006,7 @@ void LR35902::PrefixCB(uint8_t code)
 		break;
 	case 0x88: // RES 1,X 
 		if (reg != 0xFF)
-		{
+   		{
 			GetRegister(reg) &= 0xFD;
 		}
 		else

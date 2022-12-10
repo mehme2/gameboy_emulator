@@ -44,6 +44,7 @@ private:
 	int oamIndex = 0;
 	int fetchStep = 1;
 	int sprIndex = -1;
+	bool lcdOff = false;
 	bool wy = false;
 	bool stopFifo = false;
 	uint8_t x = 0;

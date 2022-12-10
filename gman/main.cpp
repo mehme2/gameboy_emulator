@@ -27,28 +27,28 @@ LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			switch (wParam)
 			{
 			case VK_RIGHT:
-				input |= 0x01;
+				input &= ~0x01;
 				break;
 			case VK_LEFT:
-				input |= 0x02;
+				input &= ~0x02;
 				break;
 			case VK_UP:
-				input |= 0x04;
+				input &= ~0x04;
 				break;
 			case VK_DOWN:
-				input |= 0x08;
+				input &= ~0x08;
 				break;
 			case 'Z':
-				input |= 0x10;
+				input &= ~0x10;
 				break;
 			case 'X':
-				input |= 0x20;
+				input &= ~0x20;
 				break;
 			case VK_BACK:
-				input |= 0x40;
+				input &= ~0x40;
 				break;
 			case VK_RETURN:
-				input |= 0x80;
+				input &= ~0x80;
 				break;
 			}
 		}
@@ -57,28 +57,28 @@ LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		switch (wParam)
 		{
 		case VK_RIGHT:
-			input &= ~0x01;
+			input |= 0x01;
 			break;
 		case VK_LEFT:
-			input &= ~0x02;
+			input |= 0x02;
 			break;
 		case VK_UP:
-			input &= ~0x04;
+			input |= 0x04;
 			break;
 		case VK_DOWN:
-			input &= ~0x08;
+			input |= 0x08;
 			break;
 		case 'Z':
-			input &= ~0x10;
+			input |= 0x10;
 			break;
 		case 'X':
-			input &= ~0x20;
+			input |= 0x20;
 			break;
 		case VK_BACK:
-			input &= ~0x40;
+			input |= 0x40;
 			break;
 		case VK_RETURN:
-			input &= ~0x80;
+			input |= 0x80;
 			break;
 		}
 		break;
