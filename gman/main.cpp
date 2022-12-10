@@ -2,7 +2,7 @@
 #include <d3d11.h>
 #include <wrl.h>
 #include <DirectXMath.h>
-#include <dsound.h>
+#include <xaudio2.h>
 
 namespace Shaders
 {
@@ -349,38 +349,62 @@ int WINAPI WinMain(
 	pContext->PSSetShaderResources(0u, 1u, pTexView.GetAddressOf());
 	pContext->PSSetSamplers(0u, 1u, pSamplerState.GetAddressOf());
 
+	CoInitializeEx(NULL, COINITBASE_MULTITHREADED);
 
-	//wrl::ComPtr<IDirectSound> pDS;
-	//if (FAILED(DirectSoundCreate(NULL, pDS.GetAddressOf(), NULL)))
-	//{
-	//	MessageBox(nullptr, "Failed to create sound interface.", "DS Error", MB_OK | MB_ICONWARNING);
-	//}
-	//
-	//DSBUFFERDESC dsDesc;
-	//dsDesc.dwSize = sizeof(dsDesc);
-	//dsDesc.dwFlags = DSBCAPS_CTRLVOLUME;
-	//dsDesc.dwBufferBytes = 16;
-	//dsDesc.dwReserved = 0;
-	//dsDesc.lpwfxFormat = NULL;
-	//dsDesc.guid3DAlgorithm = GUID_NULL;
-	//
-	//wrl::ComPtr<IDirectSoundBuffer> pDSBuf;
-	//HRESULT hr;
-	//if (FAILED(hr=pDS->CreateSoundBuffer(&dsDesc, pDSBuf.GetAddressOf(), NULL)))
-	//{
-	//	MessageBox(nullptr, "Failed to create sound buffer.", "DS Error", MB_OK | MB_ICONWARNING);
-	//}
-	//
-	//uint8_t* pSBuf1;
-	//int bufSize1;
-	//uint8_t* pSBuf2;
-	//int bufSize2;
-	//pDSBuf->Lock(0, 16, (void**)&pSBuf1, (LPDWORD)&bufSize1, (void**)&pSBuf2, (LPDWORD)&bufSize2, DSBLOCK_ENTIREBUFFER);
-	//for (int i = 0;i < 16;i++)
-	//{
-	//	pSBuf1[i] = 0xFF;
-	//}
-	//pDSBuf->Unlock((void**)&pSBuf1, bufSize1, (void**)&pSBuf2, bufSize2);
+	wrl::ComPtr<IXAudio2> pxa;
+	if(FAILED(XAudio2Create(&pxa, 0, XAUDIO2_DEFAULT_PROCESSOR)))
+	{
+		MessageBox(nullptr, "Failed to create sound interface.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
+	}
+
+	IXAudio2MasteringVoice* pmv;
+	if(FAILED(pxa->CreateMasteringVoice(&pmv)))
+	{
+		MessageBox(nullptr, "Failed to create masteringvoice.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
+	}
+
+	WAVEFORMATEX format;
+	format.nChannels = 1;
+	format.nSamplesPerSec = 44100;
+	format.wBitsPerSample = 8;
+	format.nBlockAlign = (format.nChannels * format.wBitsPerSample) / 8;
+	format.nAvgBytesPerSec = format.nBlockAlign * format.nSamplesPerSec;
+	format.cbSize = 0;
+	format.wFormatTag = WAVE_FORMAT_PCM;
+
+	uint8_t buffa[16];
+
+	for (int i = 0;i < 16;i++)
+	{
+		buffa[i] = ((i - 8) * (i - 8) / 64) * 0xFF;
+	}
+
+	XAUDIO2_BUFFER aBuf;
+	aBuf.Flags = 0;
+	aBuf.AudioBytes = 16;
+	aBuf.pAudioData = buffa;
+	aBuf.PlayBegin = 0;
+	aBuf.PlayLength = 0;
+	aBuf.LoopBegin = 0;
+	aBuf.LoopLength = 0;
+	aBuf.LoopCount = XAUDIO2_LOOP_INFINITE;
+	aBuf.pContext = NULL;
+
+	IXAudio2SourceVoice* psv;
+	if(FAILED(pxa->CreateSourceVoice(&psv, &format)))
+	{
+		MessageBox(nullptr, "Failed to create sourcevoice.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
+	}
+
+	if(FAILED(psv->SubmitSourceBuffer(&aBuf)))
+	{
+		MessageBox(nullptr, "Failed to submitsourcebuffer.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
+	}
+
+	if (FAILED(psv->Start()))
+	{
+		MessageBox(nullptr, "Failed to start.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
+	}
 
 	float background[4] = { 0.4f,0.4f,0.4f,1.0f };
 
@@ -411,7 +435,7 @@ int WINAPI WinMain(
 	}
 	else
 	{
-		gman.LoadRom("roms/tetris.gb");
+		return -1;
 	}
 	bool loadBoot = false;
 	if (loadBoot)
