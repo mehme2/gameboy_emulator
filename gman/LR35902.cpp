@@ -190,7 +190,7 @@ void LR35902::Tick()
 				sleep = 4;
 				break;
 			case 0x18:// JR r8
-				PC += char(Fetch());
+				PC +=  int8_t(Fetch());
 				sleep = 12;
 				break;
 			case 0x19:// ADD HL,DE
@@ -224,7 +224,7 @@ void LR35902::Tick()
 			case 0x20:// JR NZ,r8 
 				if (GetFlag(FLAG_Z) == 0)
 				{
-					PC += char(Fetch());
+					PC += int8_t(Fetch());
 					sleep = 12;
 				}
 				else
@@ -300,7 +300,7 @@ void LR35902::Tick()
 				}
 				else
 				{
-					PC += char(Fetch());
+					PC += int8_t(Fetch());
 					sleep = 12;
 				}
 				break;
@@ -337,7 +337,7 @@ void LR35902::Tick()
 			case 0x30:// JR NC,r8
 				if (GetFlag(FLAG_C) == 0)
 				{
-					PC += char(Fetch());
+					PC += int8_t(Fetch());
 					sleep = 12;
 				}
 				else
@@ -396,7 +396,7 @@ void LR35902::Tick()
 				}
 				else
 				{
-					PC += char(Fetch());
+					PC += int8_t(Fetch());
 					sleep = 12;
 				}
 				break;
@@ -1057,8 +1057,9 @@ void LR35902::Tick()
 				break;
 			case 0xC6:// ADD A,d8
 			{
+				auto add = Fetch();
 				auto old = GetRegister(REGISTER_A);
-				auto res = GetRegister(REGISTER_A) += Fetch();
+				auto res = GetRegister(REGISTER_A) += add;
 				SetFlag(FLAG_Z, res == 0 ? FLAG_SET : FLAG_CLEAR);
 				SetFlag(FLAG_H, (old & 0x0F) > (res & 0x0F) ? FLAG_SET : FLAG_CLEAR);
 				SetFlag(FLAG_C, old > res ? FLAG_SET : FLAG_CLEAR);
@@ -1151,7 +1152,7 @@ void LR35902::Tick()
 				}
 				break;
 			case 0xD1:// POP DE
-				GetRegister16(REGISTER_DE) = bus.Read(SP);
+				GetRegister16(REGISTER_DE) = bus.Read16(SP);
 				SP += 2;
 				sleep = 12;
 				break;
@@ -1306,7 +1307,7 @@ void LR35902::Tick()
 			case 0xE8:// ADD SP,r8
 				{ 
 					auto old = SP;
-					auto res = SP += char(Fetch());
+					auto res = SP += int8_t(Fetch());
 					SetFlag(FLAG_Z, FLAG_CLEAR);
 					SetFlag(FLAG_H, (old & 0x0FFF) > (res & 0x0FFF) ? FLAG_SET : FLAG_CLEAR);
 					SetFlag(FLAG_C, old > res ? FLAG_SET : FLAG_CLEAR);
@@ -1383,7 +1384,7 @@ void LR35902::Tick()
 			case 0xF8:// LD HL,SP+r8
 			{
 				auto old = SP;
-  				GetRegister16(REGISTER_HL) = SP + char(Fetch());
+  				GetRegister16(REGISTER_HL) = SP + int8_t(Fetch());
 				SetFlag(FLAG_Z, FLAG_CLEAR);
 				SetFlag(FLAG_H, (GetRegister16(REGISTER_HL) & 0x0FFF) < (old & 0x0FFF) ? FLAG_SET : FLAG_CLEAR);
 				SetFlag(FLAG_N, FLAG_CLEAR);
