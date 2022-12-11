@@ -372,16 +372,11 @@ int WINAPI WinMain(
 	format.cbSize = 0;
 	format.wFormatTag = WAVE_FORMAT_PCM;
 
-	uint8_t buffa[16];
-
-	for (int i = 0;i < 16;i++)
-	{
-		buffa[i] = ((i - 8) * (i - 8) / 64);
-	}
+	uint8_t* buffa = new uint8_t[44100];
 
 	XAUDIO2_BUFFER aBuf;
 	aBuf.Flags = 0;
-	aBuf.AudioBytes = 32;
+	aBuf.AudioBytes = 44100;
 	aBuf.pAudioData = buffa;
 	aBuf.PlayBegin = 0;
 	aBuf.PlayLength = 0;
@@ -400,11 +395,6 @@ int WINAPI WinMain(
 	{
 		MessageBox(nullptr, "Failed to submitsourcebuffer.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
 	}
-
-	//if (FAILED(psv->Start()))
-	//{
-	//	MessageBox(nullptr, "Failed to start.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
-	//}
 
 	float background[4] = { 0.4f,0.4f,0.4f,1.0f };
 
@@ -447,8 +437,14 @@ int WINAPI WinMain(
 		}
 	}
 	gman.SetPixelBuffer(pBuffer);
+	gman.SetSoundBuffer(buffa, aBuf.AudioBytes, format.nSamplesPerSec);
 	gman.BindKeyPtr(&input);
 
+	if (FAILED(psv->Start()))
+	{
+		MessageBox(nullptr, "Failed to start.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
+	}
+	
 	MSG msg;
 	while (1)
 	{

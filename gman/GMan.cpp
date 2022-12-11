@@ -3,7 +3,8 @@
 GMan::GMan()
 	:
 	cpu(bus),
-	ppu(bus)
+	ppu(bus),
+	apu(bus)
 {
 }
 
@@ -29,6 +30,7 @@ void GMan::Tick()
 {
 	cpu.Tick();
 	ppu.Tick();
+	apu.Tick();
 	divCount = (divCount + 1) % 256;
 	if (divCount == 0)
 	{
@@ -69,6 +71,11 @@ void GMan::SetPixelBuffer(void* ptr)
 {
 	this->ptr = ptr;
 	ppu.BindPixelBuffer(ptr);
+}
+
+void GMan::SetSoundBuffer(void* ptr, uint16_t samp, uint16_t frequency)
+{
+	apu.BindBuffer((uint8_t*)ptr, samp, frequency);
 }
 
 void GMan::LoadRom(const char* path)

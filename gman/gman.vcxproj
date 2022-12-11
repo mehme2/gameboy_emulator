@@ -143,6 +143,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="APU.cpp" />
     <ClCompile Include="Bus.cpp" />
     <ClCompile Include="GMan.cpp" />
     <ClCompile Include="LR35902.cpp" />
@@ -172,6 +173,7 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="APU.h" />
     <ClInclude Include="Bus.h" />
     <ClInclude Include="GMan.h" />
     <ClInclude Include="LR35902.h" />

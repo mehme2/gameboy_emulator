@@ -18,6 +18,8 @@ public:
 	void BindRom(uint8_t* pRom, size_t size);
 	void BindBootRom(uint8_t* pRom, size_t size);
 	void PPUWrite(uint16_t addr, uint8_t val);
+	void APUWrite(uint16_t addr, uint8_t val);
+	uint8_t APURead(uint16_t addr);
 private:
 	uint8_t* memBuf;
 	uint8_t* rom;

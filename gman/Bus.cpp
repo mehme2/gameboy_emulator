@@ -69,6 +69,15 @@ uint8_t Bus::Read(uint16_t addr)
 			memBuf[0xFF00] = 0xC0 | (memBuf[0xFF00] & 0x30) | (*keys & 0x0F);
 		}
 	}
+	switch (addr)
+	{
+	case 0xFF13:
+	case 0xFF18:
+	case 0xFF1B:
+	case 0xFF1D:
+	case 0xFF20:
+		return 0xFF;
+	}
 	return memBuf[addr];
 }
 
@@ -156,16 +165,43 @@ void Bus::Write(uint16_t addr, uint8_t val)
 		memBuf[0xFF00] = (memBuf[0xFF00] & 0x0F) | (val & 0x30) | 0xC0;
 		if ((memBuf[0xFF00] & 0x20) == 0)
 		{
-			memBuf[0xFF00] = (memBuf[0xFF00] & 0x03) | ((*keys >> 4) & 0x0F);
+			memBuf[0xFF00] = (memBuf[0xFF00] & 0x30) | ((*keys >> 4) & 0x0F);
 		}
 		else
 		{
-			memBuf[0xFF00] = (memBuf[0xFF00] & 0x03) | (*keys & 0x0F);
+			memBuf[0xFF00] = (memBuf[0xFF00] & 0x30) | (*keys & 0x0F);
 		}
-		break;
+		return;
 	case 0xFF04:
 		memBuf[0xFF04] = 0;
 		memBuf[0xFF05] = memBuf[0xFF06];
+		return;
+	case 0xFF10:
+		memBuf[0xFF10] = 0x80 | (val & 0x7F);
+		return;
+	case 0xFF14:
+		memBuf[0xFF14] = 0x38 | (val & 0xC7);
+		return;
+	case 0xFF19:
+		memBuf[0xFF19] = 0x38 | (val & 0xC7);
+		return;
+	case 0xFF1A:
+		memBuf[0xFF1A] = 0x7F | (val & 0x80);
+		return;
+	case 0xFF1C:
+		memBuf[0xFF1C] = 0x8F | (val & 0x70);
+		return;
+	case 0xFF1E:
+		memBuf[0xFF1E] = 0x38 | (val & 0xC7);
+		return;
+	case 0xFF20:
+		memBuf[0xFF20] = 0xE0 | (val & 0x1F);
+		return;
+	case 0xFF23:
+		memBuf[0xFF23] = 0xC0 | (val & 0x3F);
+		return;
+	case 0xFF26:
+		memBuf[0xFF26] = 0x70 | (memBuf[0xFF26] & 0x0F) | (val & 0x80);
 		return;
 	case 0xFF41:
 		memBuf[0xFF41] = (memBuf[0xFF41] & 0x07) | (val & 0xF8);
@@ -210,4 +246,21 @@ void Bus::PPUWrite(uint16_t addr, uint8_t val)
 	{
 		memBuf[addr] = val;
 	}
+}
+
+void Bus::APUWrite(uint16_t addr, uint8_t val)
+{
+	if (addr >= 0xFF10 && addr < 0xFF40)
+	{
+		memBuf[addr] = val;
+	}
+}
+
+uint8_t Bus::APURead(uint16_t addr)
+{
+	if (addr >= 0xFF10 && addr < 0xFF40)
+	{
+		return memBuf[addr];
+	}
+	return 0xFF;
 }
