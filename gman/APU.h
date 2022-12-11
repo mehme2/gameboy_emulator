@@ -26,5 +26,10 @@ private:
 	uint8_t ch2AMP = 0;
 	uint8_t ch3AMP = 0;
 	uint8_t ch4AMP = 0;
-	uint8_t ch3SHIFT = 0;
+	uint8_t ch1OUT = 0;
+	uint8_t ch2OUT = 0;
+	uint8_t ch3OUT = 0;
+	uint8_t ch4OUT = 0;
+	uint16_t LSFR=0;
+	size_t freq_timer;
 };
