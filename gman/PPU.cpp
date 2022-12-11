@@ -103,10 +103,6 @@ void PPU::Tick()
 				fetcherX += fifo.size();
 				fetcherY = !window ? bus.PPURead(SCY) + bus.PPURead(LY) : windowLineCounter;
 				sleep = 2;
-				if (x == 0)
-				{
-					shift = window ? (bus.PPURead(WX) - 7) % 8 : bus.PPURead(SCX) % 8;
-				}
 				fetchStep++;
 			}
 			break;
@@ -188,7 +184,7 @@ void PPU::Tick()
 	{
 		if (fifo.size() > 8 && !stopFifo)
 		{
-			while (shift > 0)
+			while (shift > 0 && fifo.size() > 0)
 			{
 				shift--;
 				fifo.erase(fifo.begin());
@@ -206,31 +202,34 @@ void PPU::Tick()
 					}
 				}
 			}
-			if (sprIndex == -1)
+			if (sprIndex == -1&&fifo.size()>0)
 			{
-				auto palette = bus.PPURead(BGP);
-				int index = bus.PPURead(LY) * 160 + x;
-				uint8_t color = fifo.front().color;
+				if (x>=0)
+				{
+					auto palette = bus.PPURead(BGP);
+					int index = bus.PPURead(LY) * 160 + x;
+					uint8_t color = fifo.front().color;
+					if (lcdOff || (bus.PPURead(LCDC) & 0x01) == 0)
+					{
+						color = 0;
+					}
+					switch (color)
+					{
+					case 0:
+						((Color*)pBuffer)[index] = { 0x0F,0xBC,0x9B,0xFF };
+						break;
+					case 1:
+						((Color*)pBuffer)[index] = { 0x0F,0xAC,0x8B,0xFF };
+						break;
+					case 2:
+						((Color*)pBuffer)[index] = { 0x30,0x62,0x30,0xFF };
+						break;
+					case 3:
+						((Color*)pBuffer)[index] = { 0x0F,0x38,0x0F,0xFF };
+						break;
+					}
+				}
 				fifo.erase(fifo.begin());
-				if (lcdOff || (bus.PPURead(LCDC) & 0x01) == 0)
-				{
-					color = 0;
-				}
-				switch (color)
-				{
-				case 0:
-					((Color*)pBuffer)[index] = { 0x0F,0xBC,0x9B,0xFF };
-					break;
-				case 1:
-					((Color*)pBuffer)[index] = { 0x0F,0xAC,0x8B,0xFF };
-					break;
-				case 2:
-					((Color*)pBuffer)[index] = { 0x30,0x62,0x30,0xFF };
-					break;
-				case 3:
-					((Color*)pBuffer)[index] = { 0x0F,0x38,0x0F,0xFF };
-					break;
-				}
 				x++;
 				bool winOld = window;
 				window = wyc && (bus.PPURead(LCDC) & 0x20) != 0 && x >= (bus.PPURead(WX) - 7);
@@ -239,6 +238,11 @@ void PPU::Tick()
 					windowLineCounter++;
 					fifo.clear();
 					fetchStep = 1;
+					shift = 0;
+				}
+				if (x == -7)
+				{
+					shift = window ? (bus.PPURead(WX) - 7) % 8 : bus.PPURead(SCX) % 8;
 				}
 			}
 		}
@@ -246,7 +250,7 @@ void PPU::Tick()
 		{
 			SetMode(0);
 			fifo.clear();
-			x = 0;
+			x = -8;
 			fetchStep = 1;
 			sprIndex = -1;
 			stopFifo = false;

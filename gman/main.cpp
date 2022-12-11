@@ -376,12 +376,12 @@ int WINAPI WinMain(
 
 	for (int i = 0;i < 16;i++)
 	{
-		buffa[i] = ((i - 8) * (i - 8) / 64) * 0xFF;
+		buffa[i] = ((i - 8) * (i - 8) / 64);
 	}
 
 	XAUDIO2_BUFFER aBuf;
 	aBuf.Flags = 0;
-	aBuf.AudioBytes = 16;
+	aBuf.AudioBytes = 32;
 	aBuf.pAudioData = buffa;
 	aBuf.PlayBegin = 0;
 	aBuf.PlayLength = 0;
@@ -401,10 +401,10 @@ int WINAPI WinMain(
 		MessageBox(nullptr, "Failed to submitsourcebuffer.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
 	}
 
-	if (FAILED(psv->Start()))
-	{
-		MessageBox(nullptr, "Failed to start.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
-	}
+	//if (FAILED(psv->Start()))
+	//{
+	//	MessageBox(nullptr, "Failed to start.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
+	//}
 
 	float background[4] = { 0.4f,0.4f,0.4f,1.0f };
 
@@ -462,7 +462,6 @@ int WINAPI WinMain(
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-		memset(pBuffer, 0, sizeof(Color) * 144 * 160);
 		gman.DoFrame();
 		D3D11_MAPPED_SUBRESOURCE msr;
 		if (FAILED(pContext->Map(pTex.Get(), 0u,
@@ -479,5 +478,6 @@ int WINAPI WinMain(
 		pContext->ClearRenderTargetView(pTargetView.Get(), background);
 		pContext->DrawIndexed(6, 0, 0);
 		pSwapChain->Present(1, 0);
+		memset(pBuffer, 0, sizeof(Color) * 144 * 160);
  	}
 }

@@ -50,7 +50,7 @@ private:
 	bool lcdOff = false;
 	bool wyc = false;
 	bool stopFifo = false;
-	uint8_t x = 0;
+	int x = 0;
 	uint8_t fetcherX = 0;
 	uint8_t fetcherY = 0;
 	uint16_t fetchAddr = 0;
