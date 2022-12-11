@@ -37,7 +37,18 @@ void APU::Tick()
 	div++;
 	if (div % (4194304 / freq) == 0)
 	{
-		buffer[bufIndex] = ch1AMP + ch2AMP;
+		uint8_t nr51 = bus.APURead(NR51);
+		uint8_t L[4];
+		uint8_t R[4];
+		for (int i = 0;i < 4;i++)
+		{
+			L[i] = (nr51 >> (4 + i)) & 0x01;
+			R[i] = (nr51 >> i) & 0x01;
+		}
+		buffer[bufIndex] = (bus.APURead(NR52) & 0x80) == 0 ? 0 : 
+			ch1AMP * (L[0] + R[0])
+			+ (ch2AMP * (L[1] + R[1]))
+			+ ((ch3AMP >> ch3SHIFT)) * (L[2] + R[2]);
 		bufIndex = (bufIndex + 1) % samples;
 	}
 }
@@ -88,9 +99,9 @@ void APU::TickCH1()
 				bus.APUWrite(NR11, (nr11 & 0xC0) | (timer & 0x3F));
 			}
 		}
-		if (div % (2048-wavelength) == 0)
+		if (div % (4*(2048-wavelength)) == 0)
 		{
-			uint8_t step = (div / (2048-wavelength)) % 8;
+			uint8_t step = (div / (4 * (2048 - wavelength))) % 8;
 			uint8_t waveform;
 			uint8_t amp = (nr12 & 0xF0) >> 4;
 			switch ((nr11 & 0xC0) >> 6)
@@ -113,6 +124,14 @@ void APU::TickCH1()
 		bus.APUWrite(NR13, wavelength & 0xFF);
 		bus.APUWrite(NR14, ((wavelength >> 8) & 0x07) | (bus.APURead(NR14) & 0xF8));
 	}
+	else if ((bus.APURead(NR14) & 0x80) != 0)
+	{
+		ch1ON = true;
+	}
+	else
+	{
+		ch1AMP = 0;
+	}
 }
 
 void APU::TickCH2()
@@ -130,14 +149,14 @@ void APU::TickCH2()
 				timer++;
 				if (timer == 64)
 				{
-					ch1ON = false;
+					ch2ON = false;
 				}
-				bus.APUWrite(NR11, (nr21 & 0xC0) | (timer & 0x3F));
+				bus.APUWrite(NR21, (nr21 & 0xC0) | (timer & 0x3F));
 			}
 		}
-		if (div % (2048 - wavelength) == 0)
+		if (div % (4*(2048 - wavelength)) == 0)
 		{
-			uint8_t step = (div / (2048 - wavelength)) % 8;
+			uint8_t step = (div / (4 * (2048 - wavelength))) % 8;
 			uint8_t waveform;
 			uint8_t amp = (nr22 & 0xF0) >> 4;
 			switch ((nr21 & 0xC0) >> 6)
@@ -160,10 +179,68 @@ void APU::TickCH2()
 		bus.APUWrite(NR23, wavelength & 0xFF);
 		bus.APUWrite(NR24, ((wavelength >> 8) & 0x07) | (bus.APURead(NR24) & 0xF8));
 	}
+	else if ((bus.APURead(NR24) & 0x80) != 0)
+	{
+		ch2ON = true;
+	}
+	else
+	{
+		ch2AMP = 0;
+	}
 }
 
 void APU::TickCH3()
 {
+	if (ch3ON)
+	{
+		uint8_t nr31 = bus.APURead(NR31);
+		uint8_t nr32 = bus.APURead(NR32);
+		uint16_t wavelength = bus.APURead(NR33) + ((bus.APURead(NR34) & 0x07) << 8);
+		if ((bus.APURead(NR34) & 0x40) != 0)
+		{
+			if (div % 16384 == 0)
+			{
+				uint8_t timer = nr31;
+				timer++;
+				if (timer == 0)
+				{
+					ch2ON = false;
+				}
+				bus.APUWrite(NR31, timer);
+			}
+		}
+		if (div % (2*(2048 - wavelength)) == 0)
+		{
+			uint8_t step = (div / (2*(2048 - wavelength))) % 32;
+			uint8_t amp = bus.APURead(0xFF30 + (step / 2));
+			ch3AMP = (amp >> (4 * (step % 2))) & 0x0F;
+		}
+		switch ((bus.APURead(NR32) & 0x60) >> 5)
+		{
+		case 0:
+			ch3SHIFT = 4;
+			break;
+		case 1:
+			ch3SHIFT = 0;
+			break;
+		case 2:
+			ch3SHIFT = 1;
+			break;
+		case 3:
+			ch3SHIFT = 2;
+			break;
+		}
+		bus.APUWrite(NR33, wavelength & 0xFF);
+		bus.APUWrite(NR34, ((wavelength >> 8) & 0x07) | (bus.APURead(NR34) & 0xF8));
+	}
+	else if ((bus.APURead(NR34) & 0x80) != 0)
+	{
+		ch3ON = true;
+	}
+	else
+	{
+		ch3AMP = 0;
+	}
 }
 
 void APU::TickCH4()

@@ -363,6 +363,8 @@ int WINAPI WinMain(
 		MessageBox(nullptr, "Failed to create masteringvoice.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
 	}
 
+	static constexpr int aBufSize = 44100;
+
 	WAVEFORMATEX format;
 	format.nChannels = 1;
 	format.nSamplesPerSec = 44100;
@@ -372,11 +374,12 @@ int WINAPI WinMain(
 	format.cbSize = 0;
 	format.wFormatTag = WAVE_FORMAT_PCM;
 
-	uint8_t* buffa = new uint8_t[44100];
+	uint8_t* buffa = new uint8_t[aBufSize];
+	uint8_t* backBuf = new uint8_t[aBufSize];
 
 	XAUDIO2_BUFFER aBuf;
 	aBuf.Flags = 0;
-	aBuf.AudioBytes = 44100;
+	aBuf.AudioBytes = aBufSize;
 	aBuf.pAudioData = buffa;
 	aBuf.PlayBegin = 0;
 	aBuf.PlayLength = 0;
@@ -459,6 +462,7 @@ int WINAPI WinMain(
 			DispatchMessage(&msg);
 		}
 		gman.DoFrame();
+		//memcpy(buffa, backBuf, aBufSize);
 		D3D11_MAPPED_SUBRESOURCE msr;
 		if (FAILED(pContext->Map(pTex.Get(), 0u,
 			D3D11_MAP_WRITE_DISCARD, 0u, &msr)))

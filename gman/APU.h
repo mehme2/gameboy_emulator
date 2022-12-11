@@ -18,12 +18,13 @@ private:
 	uint16_t samples = 0;
 	uint16_t bufIndex = 0;
 	size_t div = 0;
-	bool ch1ON = true;
-	bool ch2ON = true;
-	bool ch3ON = true;
-	bool ch4ON = true;
+	bool ch1ON = false;
+	bool ch2ON = false;
+	bool ch3ON = false;
+	bool ch4ON = false;
 	uint8_t ch1AMP = 0;
 	uint8_t ch2AMP = 0;
 	uint8_t ch3AMP = 0;
 	uint8_t ch4AMP = 0;
+	uint8_t ch3SHIFT = 0;
 };
