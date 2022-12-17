@@ -1,0 +1,117 @@
+#include "Cartridge.h"
+
+void Cartridge::Init(uint8_t* pRom)
+{
+	rom = pRom;
+	for (uint16_t addr = 0x0134;addr <= 0x0143;addr++)
+	{
+		title[addr - 0x0134] = rom[addr];
+	}
+	title[16] = 0;
+	type = rom[0x0147];
+	romSize = rom[0x0148];
+	ramSize = rom[0x0149];
+	switch (ramSize)
+	{
+	case 2:
+		ram = new uint8_t[0x2000];
+		break;
+	case 3:
+		ram = new uint8_t[0x8000];
+		break;
+	case 4:
+		ram = new uint8_t[0x20000];
+		break;
+	case 5:
+		ram = new uint8_t[0x10000];
+		break;
+	}
+}
+
+uint8_t Cartridge::Read(uint16_t addr)
+{
+	uint8_t val = 0xFF;
+	switch (type)
+	{
+	case 0:
+		if (addr < 0x8000) val = rom[addr];
+		break;
+	case 3:
+	case 2:
+		if (enableRam)
+		{
+			if (addr >= 0xA000 && addr < 0xC000)
+			{
+				if (ramSize == 3)
+				{
+					val = ram[addr - 0xA000 + (bankingMode * ramBank * 0x2000)];
+				}
+				else if(ramSize > 1)
+				{
+					val = ram[addr - 0xA000];
+				}
+			}
+		}
+	case 1:
+		if (romSize < 5)
+		{
+			if (addr < 0x4000)val = rom[addr];
+			else if (addr < 0x8000)val = rom[(addr + 0x4000 * (bank - 1) + (bankingMode * ramBank * 0x180000)) & (0x1FFFFF >> (6 - romSize))];
+		}
+		else
+		{
+			if (addr < 0x4000)val = rom[addr + (bankingMode * ramBank * 0x180000)];
+			else if (addr < 0x8000)val = rom[addr + 0x4000 * (bank - 1) + (bankingMode * ramBank * 0x180000)];
+		}
+		break;
+	}
+	return val;
+}
+
+void Cartridge::Write(uint16_t addr, uint8_t val)
+{
+	switch (type)
+	{
+	case 3:
+	case 2:
+		if (addr < 0x2000)
+		{
+			enableRam = ((val & 0x0F) == 0x0A);
+		}
+		if (addr >= 0x4000 && addr < 0x6000)
+		{
+			ramBank = val & 0x03;
+		}
+		else if (addr >= 0x6000 && addr < 0x8000)
+		{
+			bankingMode = val & 0x01;
+		}
+		if (enableRam)
+		{
+			if (addr >= 0xA000 && addr < 0xC000)
+			{
+				if (ramSize == 3)
+				{
+					ram[addr - 0xA000 + (bankingMode * ramBank * 0x2000)] = val;
+				}
+				else
+				{
+					ram[addr - 0xA000] = val;
+				}
+			}
+		}
+	case 1:
+		if (addr >= 0x2000 && addr < 0x4000)
+		{
+			uint8_t mask = ((2 << romSize) - 1) & 0x1F;
+			bank = val & mask;
+			if ((val & 0x1F) == 0) bank = 1;
+ 		}
+		break;
+	}
+}
+
+const char* Cartridge::GetTitle()
+{
+	return title;
+}

@@ -2,6 +2,7 @@
 
 GMan::GMan()
 	:
+	bus(cart),
 	cpu(bus),
 	ppu(bus),
 	apu(bus)
@@ -30,7 +31,7 @@ void GMan::Tick()
 {
 	cpu.Tick();
 	ppu.Tick();
-	apu.Tick();
+	//apu.Tick();
 	divCount = (divCount + 1) % 256;
 	if (divCount == 0)
 	{
@@ -80,20 +81,16 @@ void GMan::SetSoundBuffer(void* ptr, uint16_t samp, uint16_t frequency)
 
 void GMan::LoadRom(const char* path)
 {
+	uint8_t* pRom;
 	std::ifstream rom;
 	rom.open(path, std::ios::binary);
 	rom.seekg(0, rom.end);
 	size_t size = rom.tellg();
 	rom.seekg(0, rom.beg);
 	pRom = new uint8_t[size];
-	/*for (int i = 0;i < size;i++)
-	{
-	rom >> b;
-	pRom[i] = b;
-	}*/
 	rom.read((char*)pRom, size);
 	rom.close();
-	bus.BindRom(pRom, size);
+	cart.Init(pRom);
 }
 
 void GMan::LoadBootRom(const char* path)
@@ -113,4 +110,9 @@ void GMan::LoadBootRom(const char* path)
 void GMan::BindKeyPtr(uint8_t* ptr)
 {
 	bus.keys = ptr;
+}
+
+const char* GMan::GetTitle()
+{
+	return cart.GetTitle();
 }

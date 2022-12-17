@@ -36,6 +36,9 @@
     <ClCompile Include="APU.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Cartridge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="VertexShader.hlsl">
@@ -59,6 +62,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="APU.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Cartridge.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

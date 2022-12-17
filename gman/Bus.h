@@ -2,13 +2,14 @@
 
 #include <stdint.h>
 #include <fstream>
+#include "Cartridge.h"
 
 class Bus
 {
 	friend class GMan;
 	friend class PPU;
 public:
-	Bus();
+	Bus(Cartridge& cart);
 	~Bus();
 	uint8_t Read(uint16_t addr);
 	uint8_t PPURead(uint16_t addr);
@@ -21,13 +22,10 @@ public:
 	void APUWrite(uint16_t addr, uint8_t val);
 	uint8_t APURead(uint16_t addr);
 private:
+	Cartridge& cart;
 	uint8_t* memBuf;
-	uint8_t* rom;
 	uint8_t* boot;
-	bool ramEnabled;
-	size_t romSize;
 	size_t bootSize;
-	uint8_t trash = 0xFF;
 	bool bootRom;
 	uint8_t* keys;
 	bool vramLock = false;

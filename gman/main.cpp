@@ -425,6 +425,14 @@ int WINAPI WinMain(
 	if (GetOpenFileName(&ofna))
 	{
 		gman.LoadRom(pathBuf);
+		char title[24];
+		for (int i = 0;i < 24;i++)
+		{
+			title[i] = 0;
+		}
+		strcat_s(title, "GMAN - ");
+		strcat_s(title, gman.GetTitle());
+		SetWindowText(hWnd, title);
 	}
 	else
 	{
@@ -443,10 +451,10 @@ int WINAPI WinMain(
 	gman.SetSoundBuffer(buffa, aBuf.AudioBytes, format.nSamplesPerSec);
 	gman.BindKeyPtr(&input);
 
-	if (FAILED(psv->Start()))
-	{
-		MessageBox(nullptr, "Failed to start.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
-	}
+	//if (FAILED(psv->Start()))
+	//{
+	//	MessageBox(nullptr, "Failed to start.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
+	//}
 	
 	MSG msg;
 	while (1)

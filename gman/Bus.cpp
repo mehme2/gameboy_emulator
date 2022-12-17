@@ -1,6 +1,8 @@
 #include "Bus.h"
 
-Bus::Bus()
+Bus::Bus(Cartridge& cart)
+	:
+	cart(cart)
 {
 	memBuf = new uint8_t[0x10000];
 	memset(memBuf, 0, 0x10000);
@@ -19,13 +21,9 @@ uint8_t Bus::Read(uint16_t addr)
 	{
 		return boot[addr];
 	}
-	if (addr < 0x4000)
+	if (addr < 0x8000)
 	{
-
-	}
-	else if (addr < 0x8000)
-	{
-
+		return cart.Read(addr);
 	}
 	else if (addr < 0xA000)
 	{
@@ -36,7 +34,7 @@ uint8_t Bus::Read(uint16_t addr)
 	}
 	else if (addr < 0xC000)
 	{
-		return 0xFF;
+		return cart.Read(addr);
 	}
 	else if (addr < 0xD000)
 	{
@@ -101,30 +99,9 @@ uint16_t Bus::Read16(uint16_t addr)
 
 void Bus::Write(uint16_t addr, uint8_t val)
 {
-	if (addr < 0x4000)
+	if (addr < 0x8000)
 	{
-		if (rom[0x0147] <= 0x03 && rom[0x0147] >= 0x01)
-		{
-			if (addr < 0x2000)
-			{
-				ramEnabled = val == 0x0A;
-			}
-			else
-			{
-				uint8_t mask = 0x01;
-				while (mask < romSize / 0x4000)
-				{
-					mask = (mask << 1) | 0x01;
-				}
-				uint8_t bank = val & mask;
-				if (bank == 0) bank = 1;
-				memcpy(memBuf + 0x4000, rom + (bank * 0x4000), 0x4000);
-			}
-		}
-		return;
-	}
-	else if (addr < 0x8000)
-	{
+		cart.Write(addr, val);
 		return;
 	}
 	else if (addr < 0xA000)
@@ -136,6 +113,7 @@ void Bus::Write(uint16_t addr, uint8_t val)
 	}
 	else if (addr < 0xC000)
 	{
+		cart.Write(addr, val);
 		return;
 	}
 	else if (addr < 0xD000)
@@ -224,13 +202,6 @@ void Bus:: Write16(uint16_t addr, uint16_t val)
 	uint8_t high = (val & 0xFF00) >> 8;
 	Write(addr, low);
 	Write(addr + 1, high);
-}
-
-void Bus::BindRom(uint8_t* pRom, size_t size)
-{
-	romSize = size;
-	rom = pRom;
-	memcpy(memBuf, rom, 0x8000);
 }
 
 void Bus::BindBootRom(uint8_t* pRom, size_t size)
