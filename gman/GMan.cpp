@@ -32,6 +32,7 @@ void GMan::Tick()
 	cpu.Tick();
 	ppu.Tick();
 	//apu.Tick();
+	cart.Tick();
 	divCount = (divCount + 1) % 256;
 	if (divCount == 0)
 	{
@@ -81,16 +82,7 @@ void GMan::SetSoundBuffer(void* ptr, uint16_t samp, uint16_t frequency)
 
 void GMan::LoadRom(const char* path)
 {
-	uint8_t* pRom;
-	std::ifstream rom;
-	rom.open(path, std::ios::binary);
-	rom.seekg(0, rom.end);
-	size_t size = rom.tellg();
-	rom.seekg(0, rom.beg);
-	pRom = new uint8_t[size];
-	rom.read((char*)pRom, size);
-	rom.close();
-	cart.Init(pRom);
+	cart.Init(path);
 }
 
 void GMan::LoadBootRom(const char* path)

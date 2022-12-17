@@ -1,11 +1,20 @@
 #include "Cartridge.h"
+#include <fstream>
 
-void Cartridge::Init(uint8_t* pRom)
+void Cartridge::Init(const char* path)
 {
-	rom = pRom;
+	this->path = path;
+	std::ifstream from;
+	from.open(path, std::ios::binary);
+	from.seekg(0, from.end);
+	size_t size = from.tellg();
+	rom = new uint8_t[size];
+	from.seekg(0, from.beg);
+	from.read((char*)rom, size);
+	from.close();
 	for (uint16_t addr = 0x0134;addr <= 0x0143;addr++)
 	{
-		title[addr - 0x0134] = rom[addr];
+		title[addr - 0x0134] = (char)rom[addr];
 	}
 	title[16] = 0;
 	type = rom[0x0147];
@@ -26,6 +35,21 @@ void Cartridge::Init(uint8_t* pRom)
 		ram = new uint8_t[0x10000];
 		break;
 	}
+	std::ifstream saveFile;
+	std::string file = path;
+	if (file.find_last_of('.') == file.length() - 2)
+	{
+		file.erase(file.end());
+		file.erase(file.end());
+		file.erase(file.end());
+	}
+	file += ".sav";
+	saveFile.open(file, std::ios::binary);
+	if (saveFile)
+	{
+		saveFile.read((char*)ram, ramSize == 3 ? 0x8000 : 0x2000);
+		saveFile.close();
+	}
 }
 
 uint8_t Cartridge::Read(uint16_t addr)
@@ -35,6 +59,10 @@ uint8_t Cartridge::Read(uint16_t addr)
 	{
 	case 0:
 		if (addr < 0x8000) val = rom[addr];
+		if (ramSize == 2 && addr >= 0xA000 && addr < 0xC000)
+		{
+			val = ram[addr - 0xA000];
+		}
 		break;
 	case 3:
 	case 2:
@@ -72,6 +100,12 @@ void Cartridge::Write(uint16_t addr, uint8_t val)
 {
 	switch (type)
 	{
+	case 0:
+		if (ramSize == 2 && addr >= 0xA000 && addr < 0xC000)
+		{
+			ram[addr - 0xA000] = val;
+		}
+		break;
 	case 3:
 	case 2:
 		if (addr < 0x2000)
@@ -114,4 +148,24 @@ void Cartridge::Write(uint16_t addr, uint8_t val)
 const char* Cartridge::GetTitle()
 {
 	return title;
+}
+
+void Cartridge::Tick()
+{
+	counter++;
+	if (counter % 41943040 == 0 && type == 3)
+	{
+		std::ofstream saveFile;
+		std::string file = path;
+		if (file.find_last_of('.') == file.length() - 2)
+		{
+			file.erase(file.end());
+			file.erase(file.end());
+			file.erase(file.end());
+		}
+		file += ".sav";
+		saveFile.open(file, std::ios::binary);
+		saveFile.write((char*)ram, ramSize == 3 ? 0x8000 : 0x2000);
+		saveFile.close();
+	}
 }
