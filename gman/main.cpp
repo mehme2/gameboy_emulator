@@ -451,10 +451,10 @@ int WINAPI WinMain(
 	gman.SetSoundBuffer(buffa, aBuf.AudioBytes, format.nSamplesPerSec);
 	gman.BindKeyPtr(&input);
 
-	if (FAILED(psv->Start()))
-	{
-		MessageBox(nullptr, "Failed to start.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
-	}
+	//if (FAILED(psv->Start()))
+	//{
+	//	MessageBox(nullptr, "Failed to start.", "XAudio2 Error", MB_OK | MB_ICONWARNING);
+	//}
 	
 	MSG msg;
 	while (1)

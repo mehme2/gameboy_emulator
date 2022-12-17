@@ -20,6 +20,11 @@ void Cartridge::Init(const char* path)
 	type = rom[0x0147];
 	romSize = rom[0x0148];
 	ramSize = rom[0x0149];
+	if (type == 5 || type == 6)
+	{
+		ramSize = 0;
+		ram = new uint8_t[512];
+	}
 	switch (ramSize)
 	{
 	case 2:
@@ -35,20 +40,23 @@ void Cartridge::Init(const char* path)
 		ram = new uint8_t[0x10000];
 		break;
 	}
-	std::ifstream saveFile;
-	std::string file = path;
-	if (file.find_last_of('.') == file.length() - 3)
+	if (type == 3)
 	{
-		file.erase(file.end() - 1);
-		file.erase(file.end() - 1);
-		file.erase(file.end() - 1);
-	}
-	file += ".sav";
-	saveFile.open(file, std::ios::binary);
-	if (saveFile)
-	{
-		saveFile.read((char*)ram, ramSize == 3 ? 0x8000 : 0x2000);
-		saveFile.close();
+		std::ifstream saveFile;
+		std::string file = path;
+		if (file.find_last_of('.') == file.length() - 3)
+		{
+			file.erase(file.end() - 1);
+			file.erase(file.end() - 1);
+			file.erase(file.end() - 1);
+		}
+		file += ".sav";
+		saveFile.open(file, std::ios::binary);
+		if (saveFile)
+		{
+			saveFile.read((char*)ram, ramSize == 3 ? 0x8000 : 0x2000);
+			saveFile.close();
+		}
 	}
 }
 
@@ -57,15 +65,15 @@ uint8_t Cartridge::Read(uint16_t addr)
 	uint8_t val = 0xFF;
 	switch (type)
 	{
-	case 0:
+	case 0x00:
 		if (addr < 0x8000) val = rom[addr];
 		if (ramSize == 2 && addr >= 0xA000 && addr < 0xC000)
 		{
 			val = ram[addr - 0xA000];
 		}
 		break;
-	case 3:
-	case 2:
+	case 0x03:
+	case 0x02:
 		if (enableRam)
 		{
 			if (addr >= 0xA000 && addr < 0xC000)
@@ -80,7 +88,7 @@ uint8_t Cartridge::Read(uint16_t addr)
 				}
 			}
 		}
-	case 1:
+	case 0x01:
 		if (romSize < 5)
 		{
 			if (addr < 0x4000)val = rom[addr];
@@ -92,6 +100,22 @@ uint8_t Cartridge::Read(uint16_t addr)
 			else if (addr < 0x8000)val = rom[addr + 0x4000 * (bank - 1) + (bankingMode * ramBank * 0x180000)];
 		}
 		break;
+	case 0x05:
+	case 0x06:
+		if (addr < 0x4000)
+		{
+			val = rom[addr];
+		}
+		else if (addr < 0x8000)
+		{
+			val = rom[addr + (bank - 1) * 0x4000];
+		}
+		else if (addr >= 0xA000 && addr < 0xC000 && enableRam) 
+		{
+			val = ram[(addr - 0xA000) % 0x200];
+			val |= 0xF0;
+		}
+		break;
 	}
 	return val;
 }
@@ -100,14 +124,14 @@ void Cartridge::Write(uint16_t addr, uint8_t val)
 {
 	switch (type)
 	{
-	case 0:
+	case 0x00:
 		if (ramSize == 2 && addr >= 0xA000 && addr < 0xC000)
 		{
 			ram[addr - 0xA000] = val;
 		}
 		break;
-	case 3:
-	case 2:
+	case 0x03:
+	case 0x02:
 		if (addr < 0x2000)
 		{
 			enableRam = ((val & 0x0F) == 0x0A);
@@ -134,13 +158,33 @@ void Cartridge::Write(uint16_t addr, uint8_t val)
 				}
 			}
 		}
-	case 1:
+	case 0x01:
 		if (addr >= 0x2000 && addr < 0x4000)
 		{
 			uint8_t mask = ((2 << romSize) - 1) & 0x1F;
 			bank = val & mask;
 			if ((val & 0x1F) == 0) bank = 1;
  		}
+		break;
+	case 0x05:
+	case 0x06:
+		if (addr < 0x4000)
+		{
+			if ((addr & 0x0100) == 0)
+			{
+				enableRam = ((val & 0x0F) == 0x0A);
+			}
+			else
+			{
+				uint8_t mask = ((2 << romSize) - 1) & 0x0F;
+				bank = val & mask;
+				if ((val & 0x0F) == 0) bank = 1;
+			}
+		}
+		else if (addr >= 0xA000 && addr < 0xC000 && enableRam)
+		{
+			ram[(addr - 0xA000) % 0x200] = val;
+		}
 		break;
 	}
 }
