@@ -37,11 +37,11 @@ void Cartridge::Init(const char* path)
 	}
 	std::ifstream saveFile;
 	std::string file = path;
-	if (file.find_last_of('.') == file.length() - 2)
+	if (file.find_last_of('.') == file.length() - 3)
 	{
-		file.erase(file.end());
-		file.erase(file.end());
-		file.erase(file.end());
+		file.erase(file.end() - 1);
+		file.erase(file.end() - 1);
+		file.erase(file.end() - 1);
 	}
 	file += ".sav";
 	saveFile.open(file, std::ios::binary);
@@ -157,11 +157,11 @@ void Cartridge::Tick()
 	{
 		std::ofstream saveFile;
 		std::string file = path;
-		if (file.find_last_of('.') == file.length() - 2)
+		if (file.find_last_of('.') == file.length() - 3)
 		{
-			file.erase(file.end());
-			file.erase(file.end());
-			file.erase(file.end());
+			file.erase(file.end() - 1);
+			file.erase(file.end() - 1);
+			file.erase(file.end() - 1);
 		}
 		file += ".sav";
 		saveFile.open(file, std::ios::binary);

@@ -31,7 +31,7 @@ void GMan::Tick()
 {
 	cpu.Tick();
 	ppu.Tick();
-	//apu.Tick();
+	apu.Tick();
 	cart.Tick();
 	divCount = (divCount + 1) % 256;
 	if (divCount == 0)
