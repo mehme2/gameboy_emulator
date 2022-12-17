@@ -40,7 +40,7 @@ void Cartridge::Init(const char* path)
 		ram = new uint8_t[0x10000];
 		break;
 	}
-	if (type == 3)
+	if (type == 0x03)
 	{
 		std::ifstream saveFile;
 		std::string file = path;
@@ -55,6 +55,24 @@ void Cartridge::Init(const char* path)
 		if (saveFile)
 		{
 			saveFile.read((char*)ram, ramSize == 3 ? 0x8000 : 0x2000);
+			saveFile.close();
+		}
+	}
+	if (type == 0x06)
+	{
+		std::ifstream saveFile;
+		std::string file = path;
+		if (file.find_last_of('.') == file.length() - 3)
+		{
+			file.erase(file.end() - 1);
+			file.erase(file.end() - 1);
+			file.erase(file.end() - 1);
+		}
+		file += ".sav";
+		saveFile.open(file, std::ios::binary);
+		if (saveFile)
+		{
+			saveFile.read((char*)ram, 512);
 			saveFile.close();
 		}
 	}
@@ -197,7 +215,7 @@ const char* Cartridge::GetTitle()
 void Cartridge::Tick()
 {
 	counter++;
-	if (counter % 41943040 == 0 && type == 3)
+	if (counter % 41943040 == 0 && type == 0x03)
 	{
 		std::ofstream saveFile;
 		std::string file = path;
@@ -210,6 +228,21 @@ void Cartridge::Tick()
 		file += ".sav";
 		saveFile.open(file, std::ios::binary);
 		saveFile.write((char*)ram, ramSize == 3 ? 0x8000 : 0x2000);
+		saveFile.close();
+	}
+	if (counter % 41943040 == 0 && type == 0x06)
+	{
+		std::ofstream saveFile;
+		std::string file = path;
+		if (file.find_last_of('.') == file.length() - 3)
+		{
+			file.erase(file.end() - 1);
+			file.erase(file.end() - 1);
+			file.erase(file.end() - 1);
+		}
+		file += ".sav";
+		saveFile.open(file, std::ios::binary);
+		saveFile.write((char*)ram, 512);
 		saveFile.close();
 	}
 }
