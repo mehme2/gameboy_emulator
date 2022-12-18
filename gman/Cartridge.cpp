@@ -3,7 +3,7 @@
 
 Cartridge::~Cartridge()
 {
-	if (type == 0x03)
+	if (type == 0x03 || type == 0x13)
 	{
 		std::ofstream saveFile;
 		std::string file = path;
@@ -74,7 +74,7 @@ void Cartridge::Init(const char* path)
 		ram = new uint8_t[0x10000];
 		break;
 	}
-	if (type == 0x03)
+	if (type == 0x03 || type == 0x13)
 	{
 		std::ifstream saveFile;
 		std::string file = path;
@@ -168,6 +168,29 @@ uint8_t Cartridge::Read(uint16_t addr)
 			val |= 0xF0;
 		}
 		break;
+	case 0x13:
+	case 0x12:
+		if (enableRam && addr >= 0xA000 && addr < 0xC000)
+		{
+			if (ramSize == 3)
+			{
+				val = ram[addr - 0xA000 + (ramBank * 0x2000)];
+			}
+			else if (ramSize > 1)
+			{
+				val = ram[addr - 0xA000];
+			}
+		}
+	case 0x11:
+		if (addr < 0x4000)
+		{
+			val = rom[addr];
+		}
+		else if (addr < 0x8000)
+		{
+			val = rom[addr + (bank - 1) * 0x4000];
+		}
+		break;
 	}
 	return val;
 }
@@ -215,7 +238,7 @@ void Cartridge::Write(uint16_t addr, uint8_t val)
 		{
 			uint8_t mask = ((2 << romSize) - 1) & 0x1F;
 			bank = val & mask;
-			if ((val & 0x1F) == 0) bank = 1;
+			if ((val & 0x1F) == 0) bank++;
  		}
 		break;
 	case 0x05:
@@ -230,12 +253,41 @@ void Cartridge::Write(uint16_t addr, uint8_t val)
 			{
 				uint8_t mask = ((2 << romSize) - 1) & 0x0F;
 				bank = val & mask;
-				if ((val & 0x0F) == 0) bank = 1;
+				if ((val & 0x0F) == 0) bank++;
 			}
 		}
 		else if (addr >= 0xA000 && addr < 0xC000 && enableRam)
 		{
 			ram[(addr - 0xA000) % 0x200] = val;
+		}
+		break;
+	case 0x13:
+	case 0x12:
+		if (addr < 0x2000)
+		{
+			enableRam = ((val & 0x0F) == 0x0A); 
+		}
+		if (addr >= 0x4000 && addr < 0x6000 && ramSize == 3)
+		{
+  			ramBank = val & 0x03;
+		}
+		if (enableRam && addr >= 0xA000 && addr < 0xC000)
+		{
+			if (ramSize == 3)
+			{
+				ram[addr - 0xA000 + (ramBank * 0x2000)] = val;
+			}
+			else if (ramSize > 1)
+			{
+				ram[addr - 0xA000] = val;
+			}
+		}
+	case 0x11:
+		if (addr >= 0x2000 && addr < 0x4000)
+		{
+			uint8_t mask = ((2 << romSize) - 1) & 0x7F;
+			bank = val & mask;
+			if (bank == 0) bank = 1;
 		}
 		break;
 	}
@@ -249,7 +301,7 @@ const char* Cartridge::GetTitle()
 void Cartridge::Tick()
 {
 	counter++;
-	if (counter % 41943040 == 0 && type == 0x03)
+	if (counter % 41943040 == 0 && (type == 0x03 || type == 0x13))
 	{
 		std::ofstream saveFile;
 		std::string file = path;
