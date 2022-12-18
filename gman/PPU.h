@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Bus.h"
 #include <vector>
 
 class PPU
@@ -28,19 +27,19 @@ class PPU
 		unsigned char a;
 	}; 
 public:
-	PPU(Bus& bus);   
+	PPU();   
 	void BindPixelBuffer(void* buf);
 	void Tick();
 public:
 	uint8_t Read(uint16_t addr);
 	void Write(uint16_t addr, uint8_t val);
+	void DMA(uint8_t* addr);
 private:
 	void SetMode(int mode); 
 	void UpdateStat();
 private:
 	int tickCounter = 0;
 	bool endFrame = false;
-	Bus& bus;
 	uint8_t* pBuffer;
 	int mode = 2;
 	int sleep = 0;
@@ -63,12 +62,12 @@ private:
 	bool window = false;
 	uint8_t shift = 0;
 private:
-	uint8_t* vram = nullptr;
-	uint8_t* oam = nullptr;
-	uint8_t lcdc;
-	uint8_t stat = 0x81;
-	uint8_t scy;
-	uint8_t scx;
+	uint8_t vram[0x2000];
+	uint8_t oam[0xA0];
+	uint8_t lcdc = 0x81;
+	uint8_t stat;
+	uint8_t scy = 0;
+	uint8_t scx = 0;
 	uint8_t ly = 0;
 	uint8_t lyc;
 	uint8_t wy;
@@ -76,4 +75,5 @@ private:
 	uint8_t bgp;
 	uint8_t obp0;
 	uint8_t obp1;
+	uint8_t _if = 0xE0;
 };

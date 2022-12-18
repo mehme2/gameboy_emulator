@@ -5,6 +5,7 @@
 class Cartridge
 {
 public:
+	~Cartridge();
 	void Init(const char* pRom);
 	uint8_t Read(uint16_t addr);
 	void Write(uint16_t addr, uint8_t val);

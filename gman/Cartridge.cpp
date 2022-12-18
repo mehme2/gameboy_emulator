@@ -1,6 +1,40 @@
 #include "Cartridge.h"
 #include <fstream>
 
+Cartridge::~Cartridge()
+{
+	if (type == 0x03)
+	{
+		std::ofstream saveFile;
+		std::string file = path;
+		if (file.find_last_of('.') == file.length() - 3)
+		{
+			file.erase(file.end() - 1);
+			file.erase(file.end() - 1);
+			file.erase(file.end() - 1);
+		}
+		file += ".sav";
+		saveFile.open(file, std::ios::binary);
+		saveFile.write((char*)ram, ramSize == 3 ? 0x8000 : 0x2000);
+		saveFile.close();
+	}
+	if (type == 0x06)
+	{
+		std::ofstream saveFile;
+		std::string file = path;
+		if (file.find_last_of('.') == file.length() - 3)
+		{
+			file.erase(file.end() - 1);
+			file.erase(file.end() - 1);
+			file.erase(file.end() - 1);
+		}
+		file += ".sav";
+		saveFile.open(file, std::ios::binary);
+		saveFile.write((char*)ram, 512);
+		saveFile.close();
+	}
+}
+
 void Cartridge::Init(const char* path)
 {
 	this->path = path;
@@ -100,7 +134,7 @@ uint8_t Cartridge::Read(uint16_t addr)
 				{
 					val = ram[addr - 0xA000 + (bankingMode * ramBank * 0x2000)];
 				}
-				else if(ramSize > 1)
+				else if(ramSize == 2)
 				{
 					val = ram[addr - 0xA000];
 				}

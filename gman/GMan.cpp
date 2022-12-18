@@ -2,12 +2,9 @@
 
 GMan::GMan()
 	:
-	bus(cart),
-	cpu(bus),
-	ppu(bus),
-	apu(bus)
-{
-}
+	bus(cart, ppu, apu, timer),
+	cpu(bus)
+{}
 
 void GMan::DoFrame()
 {
@@ -33,40 +30,7 @@ void GMan::Tick()
 	ppu.Tick();
 	apu.Tick();
 	cart.Tick();
-	divCount = (divCount + 1) % 256;
-	if (divCount == 0)
-	{
-		bus.memBuf[0xFF04]++;
-	}
-	if ((bus.memBuf[0xFF07] & 0x04) != 0)
-	{
-		int mod;
-		switch (bus.memBuf[0xFF07] & 0x03)
-		{
-		case 0:
-			mod = 1024;
-			break;
-		case 1:
-			mod = 16;
-			break;
-		case 2:
-			mod = 64;
-			break;
-		case 3:
-			mod = 256;
-			break;
-		}
-		timCount = (timCount + 1) % mod;
-		if (timCount == 0)
-		{
-			bus.memBuf[0xFF05]++;
-			if (bus.memBuf[0xFF05] == 0)
-			{
-				bus.memBuf[0xFF05] = bus.memBuf[0xFF06];
-				bus.memBuf[0xFF0F] |= 0x04;
-			}
-		}
-	}
+	timer.Tick();
 }
 
 void GMan::SetPixelBuffer(void* ptr)
