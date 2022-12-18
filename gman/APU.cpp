@@ -193,7 +193,7 @@ void APU::TickCH1()
 {
 	if (ch1ON)
 	{
-		uint16_t wavelength = nr13 + ((nr14 & 0x07) << 8);
+		uint16_t wavelength = nr13 | ((nr14 & 0x07) << 8);
 		uint8_t sweepPace = (nr10 & 0x70) >> 4;
 		uint8_t envSweepPace = (nr12 & 0x07);
 		//if (envSweepPace != 0 && (div % (65536 / envSweepPace) == 0))
@@ -227,6 +227,7 @@ void APU::TickCH1()
 			if (wavelength == 0x0800)
 			{
 				ch1ON = false;
+				wavelength = 0;
 			}
 		}
 		if ((nr14 & 0x40) != 0)
@@ -282,7 +283,7 @@ void APU::TickCH2()
 {
 	if (ch2ON)
 	{
-		uint16_t wavelength = nr23 + ((nr24 & 0x07) << 8);
+		uint16_t wavelength = nr23 | ((nr24 & 0x07) << 8);
 		uint8_t envSweepPace = (nr22 & 0x07);
 		//if (envSweepPace != 0 && (div % (65536 / envSweepPace) == 0))
 		//{
@@ -353,7 +354,7 @@ void APU::TickCH3()
 {
 	if (ch3ON)
 	{
-		uint16_t wavelength = nr33 + ((nr34 & 0x07) << 8);
+		uint16_t wavelength = nr33 | ((nr34 & 0x07) << 8); 
 		if ((nr34 & 0x40) != 0)
 		{
 			if (div % 16384 == 0)
