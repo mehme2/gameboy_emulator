@@ -196,23 +196,25 @@ void APU::TickCH1()
 		uint16_t wavelength = nr13 | ((nr14 & 0x07) << 8);
 		uint8_t sweepPace = (nr10 & 0x70) >> 4;
 		uint8_t envSweepPace = (nr12 & 0x07);
-		//if (envSweepPace != 0 && (div % (65536 / envSweepPace) == 0))
-		//{
-		//	bool add = (nr12 & 0x08) >> 3;
-		//	if (add)
-		//	{
-		//		ch1AMP++;
-		//	}
-		//	else
-		//	{
-		//		if (ch1AMP != 0)
-		//		{
-		//			ch1AMP--;
-		//		}
-		//	}
-		//	ch1AMP &= 0x0F;
-		//}
-		if (sweepPace != 0 && (div % (32768 / sweepPace) == 0))
+		if (envSweepPace != 0 && (div % (65536 * envSweepPace) == 0))
+		{
+			bool add = (nr12 & 0x08) >> 3;
+			if (add)
+			{
+				if (ch1AMP != 0x0F)
+				{
+					ch1AMP++;
+				}
+			}
+			else
+			{
+				if (ch1AMP != 0)
+				{
+					ch1AMP--;
+				}
+			}
+		}
+		if (sweepPace != 0 && (div % (32768 * sweepPace) == 0))
 		{
 			bool sub = (nr10 & 0x08) >> 3;
 			uint8_t n = nr10 & 0x07;
@@ -229,6 +231,8 @@ void APU::TickCH1()
 				ch1ON = false;
 				wavelength = 0;
 			}
+			nr13 = wavelength & 0xFF;
+			nr14 = ((wavelength >> 8) & 0x07) | (nr14 & 0xF8);
 		}
 		if ((nr14 & 0x40) != 0)
 		{
@@ -264,8 +268,6 @@ void APU::TickCH1()
 			}
 			ch1OUT = ch1AMP * ((waveform >> (7 - step) & 0x01));
 		}
-		nr13 = wavelength & 0xFF;
-		nr14 = ((wavelength >> 8) & 0x07) | (nr14 & 0xF8);
 	}
 	else
 	{
@@ -285,22 +287,24 @@ void APU::TickCH2()
 	{
 		uint16_t wavelength = nr23 | ((nr24 & 0x07) << 8);
 		uint8_t envSweepPace = (nr22 & 0x07);
-		//if (envSweepPace != 0 && (div % (65536 / envSweepPace) == 0))
-		//{
-		//	bool add = (nr22 & 0x08) >> 3;
-		//	if (add)
-		//	{
-		//		ch2AMP++;
-		//	}
-		//	else
-		//	{
-		//		if (ch2AMP != 0)
-		//		{
-		//			ch2AMP--;
-		//		}
-		//	}
-		//	ch2AMP &= 0x0F;
-		//}
+		if (envSweepPace != 0 && (div % (65536 * envSweepPace) == 0))
+		{
+			bool add = (nr22 & 0x08) >> 3;
+			if (add)
+			{
+				if (ch2AMP != 0x0F)
+				{
+					ch2AMP++;
+				}
+			}
+			else
+			{
+				if (ch2AMP != 0)
+				{
+					ch2AMP--;
+				}
+			}
+		}
 		if ((nr24 & 0x40) != 0)
 		{
 			if (div % 16384 == 0)
@@ -335,8 +339,6 @@ void APU::TickCH2()
 			}
 			ch2OUT = ch2AMP * ((waveform >> (7 - step) & 0x01));
 		}
-		nr23 = wavelength & 0xFF;
-		nr24 = ((wavelength >> 8) & 0x07) | (nr24 & 0xF8);
 	}
 	else
 	{
@@ -394,6 +396,7 @@ void APU::TickCH3()
 	{
 		ch3OUT = 0;
 	}
+	ch3ON = (nr30 & 0x80) != 0;
 	if ((nr34 & 0x80) != 0)
 	{
 		nr34 &= 0x7F;
@@ -406,18 +409,23 @@ void APU::TickCH4()
 	if (ch4ON)
 	{
 		uint8_t envSweepPace = (nr42 & 0x07);
-		if (envSweepPace != 0 && (div % (65536 / envSweepPace) == 0))
+		if (envSweepPace != 0 && (div % (65536 * envSweepPace) == 0))
 		{
 			bool add = (nr42 & 0x08) >> 3;
 			if (add)
 			{
-				ch4AMP++;
+				if (ch4AMP != 0x0F)
+				{
+					ch4AMP++;
+				}
 			}
 			else
 			{
-				ch4AMP--;
+				if (ch4AMP != 0)
+				{
+					ch4AMP--;
+				}
 			}
-			ch4AMP &= 0x0F;
 		}
 		if ((nr44 & 0x40) != 0)
 		{
